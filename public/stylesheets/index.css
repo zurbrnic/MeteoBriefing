@@ -1,0 +1,33 @@
+p.title {font-size:14pt;}
+p#selected-files {display:none;white-space: nowrap;overflow:hidden;text-overflow: ellipsis;}
+
+#select-files {display: inline-block;font-size:25pt;cursor:pointer;padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
+#select-files:hover {background-color: #766254;}
+
+input[type=file] {display: none;}
+#upload-btn {display: none;font-size:16pt;cursor:pointer;padding: 5px 25px;border-radius:25px;color:white;background-color:#a28f81;}
+
+/*label {display: inline-block;font-size:25pt;cursor:pointer;padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
+label:hover {background-color: #766254;}*/
+
+#airports-label {display: inline-block;font-size:25pt; margin-top: 50pt; padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
+/*#airports-label:hover {background-color: #766254;}*/
+
+#airport-list {display: inline-block; margin: 22pt;color: #31302f;width: 30%}
+
+#add-airport-btn {font-size:16pt;cursor:pointer;padding: 5px 25px;border-radius:25px;color:white;background-color:#a28f81;}
+#add-airport-btn:hover {background-color: #766254;}
+
+
+@media screen and (max-width: 380px) {
+    p.title {font-size: 14pt;}
+}
+
+@media screen and (max-width: 300px) {
+    p.title {font-size: 14pt;}
+    label {font-size: 14pt;}
+}
+
+@media screen and (max-width: 250px) {
+    label {padding: 5px 35px;}
+}

@@ -1,0 +1,79 @@
+<DOCTYPE HTML>
+  <html>
+
+  <head>
+    <title>Meteo Briefing PDF Creator</title>
+    <meta charset="UTF-8">
+    <meta name="author" content="nz">
+    <meta name="description" content="Create Meteo Briefing based on images, actual METAR/TAF and NOTAM">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <link rel='stylesheet' href='/stylesheets/index.css' />
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+  </head>
+
+  <body>
+    <main>
+      <header>
+        <h1><a href='/'>Meteo Briefing PDF Creator</a></h1>
+      </header>
+      <article>
+        <p class='title'>Create Meteo Briefing PDF based on Images, actual METAR/TAF and NOTAM </p>
+
+        <form method='post' action='/upload' enctype='multipart/form-data'>
+          <p><input id='file-upload' type='file' name='images' accept='.png, .jpg, jpeg' multiple /></p>
+          <p><label for='file-upload' id="select-files">Select files</label></p>
+          <p id='selected-files'><code> </code> </p>
+          <p><input type='submit' id="upload-btn" value='upload' /></p>
+        </form>
+
+        <form method='post' action='/addairports'>
+          <p><label for="airport-list" id="airports-label">Airports:</label></p>
+          <p><input type="text" id="airport-list" name="airportnames" value=""></p>
+          <p><input type='submit' id="add-airport-btn" value='Add' /></p>
+        </form>
+      </article>
+
+
+      <!--           <div class="checkwx" id="metarLSZG" data-type="METAR" data-station="LSZG" ></div>
+          <p class="checkwx-container" id="tafLSZG" data-type="TAF" data-station="LSZG, LSZB"></p> -->
+
+
+      <footer>
+        <p><code>copyright &copy; Meteo Briefing PDF Creator 2024</code></p>
+      </footer>
+      <script>
+
+        let fileUpload = document.getElementById('file-upload');
+        let selectedFiles = document.querySelector('#selected-files code');
+        let submitButton = document.querySelector('#upload-btn');
+
+        let filenames = ''
+        fileUpload.onchange = function () {
+          filenames = ''
+          for (let file of this.files) {
+            filenames += file.name
+            filenames += ','
+          }
+          selectedFiles.parentElement.style.display = 'block'
+          selectedFiles.textContent = filenames
+          submitButton.style.display = 'inline-block';
+        }
+
+        let addAirportsBtn = document.getElementById('add-airport-btn');
+        let AirportsList = document.getElementById('airport-list');
+
+        let airportNames = ''
+        addAirportsBtn.onclick = function () {
+          airportNames = AirportsList.value
+          console.log(airportNames)
+        }
+
+      </script>
+    </main>
+
+    <script src="https://api.checkwx.com/widget?key=734d635d87d745bd80a2e2d81b" type="text/javascript"></script>
+
+  </body>
+
+  </html>
