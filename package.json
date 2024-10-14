@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node ./bin/www",
     "devstart": "nodemon ./bin/www"
-    
   },
   "dependencies": {
     "axios": "^1.7.7",
@@ -23,7 +22,7 @@
     "pdf-merge": "^1.2.0",
     "pdf-merger-js": "^5.1.2",
     "pdfkit": "^0.15.0",
-    "puppeteer": "^23.4.1",
+    "puppeteer": "^23.5.3",
     "sortablejs": "^1.15.3",
     "superagent": "^10.1.0"
   },
