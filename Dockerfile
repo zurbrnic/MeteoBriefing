@@ -2,7 +2,23 @@ FROM ghcr.io/puppeteer/puppeteer:23.5.3
 
 
 # Install dependencies for Chromium
-RUN apt-get update && apt-get install -y chromium
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
+    libnss3 \
+    libgconf-2-4 \
+    libxss1 \
+    libxi6 \
+    libgdk-pixbuf2.0-0 \
+    fonts-liberation \
+    libappindicator3-1 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxrandr2 \
+    libxcursor1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
