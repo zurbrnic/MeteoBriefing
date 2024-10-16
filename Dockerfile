@@ -22,6 +22,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install pdftk and other necessary packages
+RUN apt-get update && \
+    apt-get install -y pdftk && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+    
+
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
     # PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
