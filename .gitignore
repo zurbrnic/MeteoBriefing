@@ -4,8 +4,8 @@
 /public/images/*.jpeg
 /public/pdf/*.pdf
 
-!/public/pdf/
-!/public/images/
+!public/pdf/
+!public/images/
 
 node_modules
 
