@@ -271,7 +271,7 @@ async function getDabs() {
   browser.close()
 }
 
-getDabs()
+// getDabs()
 
 
 
@@ -338,12 +338,12 @@ router.post('/addairports', function (req, res) {
   }
 
   // Get NOTAMS from all selected airports and save pdf file
-  try {
-    metars = getNotams(req.body.airportnames)
-  }
-  catch (error) {
-    console.log(error)
-  }
+  // try {
+  //   metars = getNotams(req.body.airportnames)
+  // }
+  // catch (error) {
+  //   console.log(error)
+  // }
 
   // Redirect to homepage
   res.redirect('/')
