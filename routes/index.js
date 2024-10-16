@@ -49,7 +49,7 @@ async function getNotams(airports) {
     executablePath:
       process.env.NODE_ENV === 'production'
         ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath(),
+        : puppet.executablePath(),
     args: [
       '--no-sandbox', 
       '--disable-setuid-sandbox',
@@ -208,7 +208,7 @@ async function getDabs() {
     executablePath:
       process.env.NODE_ENV === 'production'
         ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath(),
+        : puppet.executablePath(),
     args: [
       '--no-sandbox', 
       '--disable-setuid-sandbox',
