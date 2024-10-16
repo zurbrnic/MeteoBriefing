@@ -293,7 +293,7 @@ let storage = multer.diskStorage({
 let fileFilter = (req, file, callback) => {
   let ext = path.extname(file.originalname);
   //if the file extension isn't '.png' or '.jpg' return an error page else return true
-  if (ext !== '.png' && ext !== '.jpg') {
+  if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
     return callback(new Error('Only png and jpg files are accepted'))
   } else {
     return callback(null, true)
