@@ -43,7 +43,6 @@ async function getNotams(airports) {
 
   var notamurl = 'https://www.notams.faa.gov/dinsQueryWeb/'
 
-
   const browser = await puppet.launch({
     headless: true,
     executablePath:
@@ -199,6 +198,8 @@ function getMetarTaf(airports) {
 // Get DABS Function
 async function getDabs() {
   console.log("Get DABS")
+  console.log(`Exec. path :  ${puppet.executablePath()}`)
+
 
   var dabsurl = 'https://www.skybriefing.com/de/dabs'
 
