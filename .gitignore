@@ -3,5 +3,9 @@
 /public/images/*.jpg
 /public/images/*.jpeg
 /public/pdf/*.pdf
+
+!/public/pdf/
+!/public/images/
+
 node_modules
 
