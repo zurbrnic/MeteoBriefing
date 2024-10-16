@@ -454,7 +454,7 @@ router.post('/pdf', function (req, res, next) {
       // Concatenate Briefing PDF with Notam PDF 
       const files = [
         path.join(__dirname, '..', `/public/pdf/${pdfName}`),
-        path.join(__dirname, '..', `/public/pdf/notams.pdf`),
+        // path.join(__dirname, '..', `/public/pdf/notams.pdf`),
         // path.join(__dirname, '..', `/public/pdf/dabs.pdf`),
         // { file: path.join(__dirname, '..', `/public/pdf/${pdfName}`) }
       ];
