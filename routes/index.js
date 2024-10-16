@@ -30,6 +30,8 @@ var axios = require('axios');
 // import puppeteer for webscraping
 var puppet = require('puppeteer');
 
+require("dotenv").config();
+
 
 
 // Get Notams Function
@@ -44,9 +46,17 @@ async function getNotams(airports) {
 
   const browser = await puppet.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-
-  })
+    executablePath:
+      process.env.NODE_ENV === 'production'
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath(),
+    args: [
+      '--no-sandbox', 
+      '--disable-setuid-sandbox',
+      '--single-process',
+      '--no-zygote',
+    ],
+  });
 
   const page = await browser.newPage();
 
@@ -195,9 +205,17 @@ async function getDabs() {
 
   const browser = await puppet.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-
-  })
+    executablePath:
+      process.env.NODE_ENV === 'production'
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath(),
+    args: [
+      '--no-sandbox', 
+      '--disable-setuid-sandbox',
+      '--single-process',
+      '--no-zygote',
+    ],
+  });
 
   const page = await browser.newPage();
 
@@ -208,7 +226,7 @@ async function getDabs() {
 
   // Get newest Dabslink
   actualdabs = '#v-ch_skyguide_ibs_portal_dabs_DabsUI_LAYOUT_435674 > div > div.v-customlayout.v-layout.v-widget.v-has-width.skb-layout01.v-customlayout-skb-layout01 > div > div:nth-child(4) > div > div > div > a'
-  
+
   await page.locator(actualdabs).click();
 
   const newPagePromise = new Promise(x => browser.once('targetcreated', target => x(target.page())));
@@ -229,10 +247,10 @@ async function getDabs() {
   await dabspage.setViewport({ width: 1080, height: 1080 });
 
   const [response] = await Promise.all([
-    page.waitForNetworkIdle({idleTime: 2000}), // The promise resolves after navigation has finished
+    page.waitForNetworkIdle({ idleTime: 2000 }), // The promise resolves after navigation has finished
   ]);
 
-  
+
   // await page.locator( '#baseSvg').click();
 
   dabspage.emulateMediaType('screen')
@@ -447,7 +465,7 @@ router.post('/pdf', function (req, res, next) {
           res.send(`/pdf/${pdfName}`)
         });
 
-        
+
       // delete metar taf files
       fs.unlink('./public/metar.txt', (err) => {
         if (err) {
