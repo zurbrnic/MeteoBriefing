@@ -1,5 +1,7 @@
 FROM ghcr.io/puppeteer/puppeteer:23.5.3
 
+# Switch to root user (if not already root)
+USER root
 
 # Install dependencies for Chromium
 RUN apt-get update && apt-get install -y --no-install-recommends \
