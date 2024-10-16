@@ -52,7 +52,7 @@ async function getNotams(airports) {
     args: [
       '--no-sandbox', 
       '--disable-setuid-sandbox',
-      '--single-process',
+      // '--single-process',
       '--no-zygote',
     ],
   });
@@ -213,7 +213,7 @@ async function getDabs() {
     args: [
       '--no-sandbox', 
       '--disable-setuid-sandbox',
-      '--single-process',
+      // '--single-process',
       '--no-zygote',
     ],
   });
