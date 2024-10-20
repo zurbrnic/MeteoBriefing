@@ -18,6 +18,7 @@ var router = express.Router();
 var path = require('path');
 
 var fs = require('fs');
+const fspromise = require('fs').promises;
 var { unlink } = require('fs/promises');
 
 //import PDFkit
@@ -50,7 +51,7 @@ async function getNotams(airports) {
         ? process.env.PUPPETEER_EXECUTABLE_PATH
         : puppet.executablePath(),
     args: [
-      '--no-sandbox', 
+      '--no-sandbox',
       '--disable-setuid-sandbox',
       // '--single-process',
       '--no-zygote',
@@ -91,29 +92,6 @@ async function getNotams(airports) {
     path: "public/pdf/notams.pdf",
   })
 
-  // print tabs
-  // for (let tabs of pages) {
-  //   let title = await tabs.title();
-  //   console.log("1 " + title);
-  // }
-
-
-  // Finding and clicking a button with the text 'Check All NOTAMs'
-  // await notampage1.$$eval('input[name="button"]', buttons => {
-  //   console.log(buttons)
-
-  //   for (const button of buttons) {
-  //     console.log(button)
-  //     if (button.textContent === 'Check All NOTAMs') {
-  //       button.click();
-  //       break; // Clicking the first matching button and exiting the loop
-  //     }
-  //   }
-  // });
-
-  // Make screenshot of notam page
-  // await notampage1.screenshot({ path: 'screenshot.png' });
-  // console.log("screenshot taken")
   browser.close()
 }
 
@@ -121,7 +99,8 @@ async function getNotams(airports) {
 // getNotams(airportsNotam)
 
 
-
+let metarFile = './public/metar.txt';
+let tafFile = './public/taf.txt';
 
 // Get Metar and Taf Function
 function getMetarTaf(airports) {
@@ -149,7 +128,7 @@ function getMetarTaf(airports) {
       .then(function (resp) {
         MetarList.push("\n" + "\n" + resp)
         let metar = resp + "\n\n"
-        fs.appendFile('./public/metar.txt', metar, (err) => {
+        fs.appendFile(metarFile, metar, (err) => {
 
           // In case of a error throw err.
           if (err) throw err;
@@ -179,7 +158,7 @@ function getMetarTaf(airports) {
       .then(function (resp) {
         TafList.push("\n" + "\n" + resp)
         let taf = resp + "\n\n"
-        fs.appendFile('./public/taf.txt', taf, (err) => {
+        fs.appendFile(tafFile, taf, (err) => {
 
           // In case of a error throw err.
           if (err) throw err;
@@ -211,7 +190,7 @@ async function getDabs() {
         ? process.env.PUPPETEER_EXECUTABLE_PATH
         : puppet.executablePath(),
     args: [
-      '--no-sandbox', 
+      '--no-sandbox',
       '--disable-setuid-sandbox',
       // '--single-process',
       '--no-zygote',
@@ -275,6 +254,35 @@ async function getDabs() {
 
 
 
+// Specify the path to the JSON file
+const filePathMinimas = './public/airport_minimas.json';
+let airportNames = ["lszg", "lszh", "eddn"];
+let newAirportJson = {};  // Empty JSON object
+
+// Read JSON function
+async function readJsonFile(airportList) {
+  airportList = airportList.replace(",", "").split(" ")
+  try {
+    // Read the file asynchronously
+    const data = await fspromise.readFile(filePathMinimas, 'utf-8');
+
+    // Parse the JSON data
+    const jsonData = JSON.parse(data);
+
+    const extractedAirports = jsonData.airports.filter(airport => airportList.includes(airport.id));
+    newAirportJson = {
+      airports: extractedAirports
+    };
+    console.log(newAirportJson["airports"])
+    // Create table and pdf
+    // createPdfWithTable(newAirportJson)
+
+  } catch (error) {
+    console.error('Error reading JSON file:', error);
+  }
+}
+
+
 
 
 //multer file storage configuration
@@ -314,14 +322,14 @@ router.get('/', function(req, res, next) {
 //
 router.post('/addairports', function (req, res) {
   // delete old txt files
-  fs.unlink('./public/metar.txt', (err) => {
+  fs.unlink(metarFile, (err) => {
     if (err) {
       console.error(`Error removing file: ${err}`);
       return;
     }
   });
 
-  fs.unlink('./public/taf.txt', (err) => {
+  fs.unlink(tafFile, (err) => {
     if (err) {
       console.error(`Error removing file: ${err}`);
       return;
@@ -329,6 +337,7 @@ router.post('/addairports', function (req, res) {
   });
 
   console.log(" Airpot Names :   " + req.body.airportnames)
+
   // Get Metar/Taf from all selected airports
   try {
     metars = getMetarTaf(req.body.airportnames)
@@ -344,6 +353,14 @@ router.post('/addairports', function (req, res) {
   // catch (error) {
   //   console.log(error)
   // }
+
+  // Get Minimas from all selected airports
+  try {
+    readJsonFile(req.body.airportnames)
+  }
+  catch (error) {
+    console.log(error)
+  }
 
   // Redirect to homepage
   res.redirect('/')
@@ -384,7 +401,7 @@ router.get('/', function (req, res, next) {
 });
 
 
-// Create PDF with images and Metar/Taf
+// Create PDF with images, Metar/Taf, Minimas, Notams and DABS
 router.post('/pdf', function (req, res, next) {
 
   let body = req.body
@@ -400,93 +417,141 @@ router.post('/pdf', function (req, res, next) {
   for (let name of body) {
     doc.addPage()
     doc.image(path.join(__dirname, '..', `/public/images/${name}`), 20, 20, { width: 555.28, align: 'center', valign: 'center' })
+    console.log("dirname:  ", path.join(__dirname, '..'))
   }
 
   // Read Metars and Tafs from txt file and add to pdf doc
-  fs.readFile('./public/metar.txt', "utf8", (err, data) => {
 
-    // In case of a error throw err.
-    if (err) throw err;
+  if (fs.existsSync(metarFile) && fs.existsSync(tafFile)) {
+    fs.readFile(metarFile, "utf8", (err, data) => {
 
-    // splitdata = data.split('\n')
-    // console.log(splitdata)
-
-    // let metars = splitdata.slice(0, (splitdata.length) / 2).join("\n\n")
-    let metars = data
-    // let tafs = splitdata.slice((splitdata.length) / 2, -1).join("\n\n")
-    // console.log("METAR : " + metars)
-    // console.log("TAF : " + tafs)
-
-    fs.readFile('./public/taf.txt', "utf8", (err, data) => {
       // In case of a error throw err.
       if (err) throw err;
 
-      // Rearrange TAFs (new line for each new timeframe)
-      let splittaf = data.split(/(?=TEMPO)|(?=BECMG)|(?=PROB)/)
-      let tafs = splittaf.join("\n     ")
+      let metars = data
+
+      fs.readFile(tafFile, "utf8", (err, data) => {
+        // In case of a error throw err.
+        if (err) throw err;
+
+        // Rearrange TAFs (new line for each new timeframe)
+        let splittaf = data.split(/(?=TEMPO)|(?=BECMG)|(?=PROB)/)
+        let tafs = splittaf.join("\n     ")
+
+        // Create Metar/Taf pdf page and add the relevant minimas
+        doc.addPage()
+        //METAR
+        doc.fontSize(14);
+        doc.text("METAR", {
+          underline: true,
+          align: 'center',
+          paragraphGap: 8,
+        })
+        doc.fontSize(10);
+        doc.text(metars)
+        // TAF
+        doc.fontSize(14);
+        doc.text("\n\n" + "TAF", {
+          underline: true,
+          align: 'center',
+          paragraphGap: 8,
+        })
+        doc.fontSize(10);
+        doc.text(tafs)
+
+        // Create Table with the relevant minimas and add to doc
+        // Define table data
+        const tableData = [
+          ['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility'],
+        ];
+
+        // Iterate through the airport array
+        for (let i = 0; i < newAirportJson.airports.length; i++) {
+          const airport = newAirportJson.airports[i];
+          const newRow = ["", airport.id.toUpperCase(), airport.rwy, airport.type, airport.minima, airport.vis];
+          tableData.push(newRow);
+          // console.log(`ID: ${airport.id}`);
+        }
+        // console.log(tableData)
+
+        const columnWidths = [80, 80, 80, 80, 80, 80];
+        const rowHeight = 25;
 
 
-      //metars = data
+        // Draw table
+        doc.fontSize(8);
+        const yOffset = (doc.page.height) - 40;
+        // console.log("Length:  ", tableData.length)
 
-      doc.addPage()
-      //METAR
-      doc.fontSize(14);
-      doc.text("METAR", {
-        underline: true,
-        align: 'center',
-        paragraphGap: 8,
-      })
-      doc.fontSize(10);
-      doc.text(metars)
-      // // TAF
-      doc.fontSize(14);
-      doc.text("\n\n" + "TAF", {
-        underline: true,
-        align: 'center',
-        paragraphGap: 8,
-      })
-      doc.fontSize(10);
-      doc.text(tafs)
+        tableData.forEach((row, rowIndex) => {
+          row.forEach((cell, cellIndex) => {
+            const x = 30 + cellIndex * columnWidths[cellIndex];
+            // const y = 10 + rowIndex * rowHeight;
+            const y = yOffset - (1 + tableData.length) * rowHeight + rowIndex * rowHeight;
+            // const y = pageHeight - (rowIndex * rowHeight);
+            // console.log("Act. Height:  ", pageHeight - (rowIndex * rowHeight))
+            // console.log("y:   ", y)
 
-      //end the process
-      doc.end();
+            // Draw cell rectangle
+            doc.rect(x, y, columnWidths[cellIndex], rowHeight).strokeColor('black').stroke();
 
-      // Concatenate Briefing PDF with Notam PDF 
-      const files = [
-        path.join(__dirname, '..', `/public/pdf/${pdfName}`),
-        // path.join(__dirname, '..', `/public/pdf/notams.pdf`),
-        // path.join(__dirname, '..', `/public/pdf/dabs.pdf`),
-        // { file: path.join(__dirname, '..', `/public/pdf/${pdfName}`) }
-      ];
-
-      //Save as new file
-      PDFMerge(files, { output: path.join(__dirname, '..', `/public/pdf/${pdfName}`) })
-        .then((buffer) => {
-          //send the address back to the browser
-          res.send(`/pdf/${pdfName}`)
+            if (rowIndex == 0) {
+              // Draw cell text for header
+              doc.font('Helvetica-Bold').text(cell, x + 5, y + 5, {
+                underline: true,
+                paragraphGap: 0,
+              });
+            } else {
+              // Draw cell text
+              doc.font('Helvetica').text(cell, x + 5, y + 5);
+            }
+          });
         });
 
+        //end the process
+        doc.end();
 
-      // delete metar taf files
-      fs.unlink('./public/metar.txt', (err) => {
-        if (err) {
-          console.error(`Error removing file: ${err}`);
-          return;
-        }
+        // Concatenate Briefing PDF with Notam PDF and DABS PDF
+        const files = [
+          path.join(__dirname, '..', `/public/pdf/${pdfName}`),
+          // path.join(__dirname, '..', `/public/pdf/notams.pdf`),
+          // path.join(__dirname, '..', `/public/pdf/dabs.pdf`),
+          // { file: path.join(__dirname, '..', `/public/pdf/${pdfName}`) }
+        ];
 
-        console.log(`File has been successfully removed.`);
-      });
+        //Save as new file
+        PDFMerge(files, { output: path.join(__dirname, '..', `/public/pdf/${pdfName}`) })
+          .then((buffer) => {
+            //send the address back to the browser
+            res.send(`/pdf/${pdfName}`)
+          });
 
-      fs.unlink('./public/taf.txt', (err) => {
-        if (err) {
-          console.error(`Error removing file: ${err}`);
-          return;
-        }
 
-        console.log(`File has been successfully removed.`);
-      });
+        // delete metar taf files
+        fs.unlink(metarFile, (err) => {
+          if (err) {
+            console.error(`Error removing file: ${err}`);
+            return;
+          }
+
+          console.log(`File metar.txt has been successfully removed.`);
+        });
+
+        fs.unlink(tafFile, (err) => {
+          if (err) {
+            console.error(`Error removing file: ${err}`);
+            return;
+          }
+
+          console.log(`File taf.txt has been successfully removed.`);
+        });
+      })
     })
-  })
+  }
+  else {
+    console.log(`File ${metarFile} or ${tafFile} does not exist!`)
+  }
+
 })
 
 
@@ -506,6 +571,16 @@ router.get('/new', function (req, res, next) {
   //redirect to the root URL
   res.redirect('/')
 })
+
+
+router.post('/delete', function (req, res, next) { 
+  console.log("Delete route");
+  console.log(req.body); // This should show the parsed body
+
+})
+
+
+
 
 
 module.exports = router;

@@ -5,25 +5,25 @@ let list = document.querySelector('div');
 let sort = Sortable.create(list);
 
 let convertButton = document.querySelector('a.convert');
-let metar = document.querySelectorAll('a.checkwx')
+let downloadButton = document.querySelector('a.download');
+let metar = document.querySelectorAll('a.checkwx');
 
 
 //When the convert button is clicked
-convertButton.onclick = function(){
+convertButton.onclick = function () {
     let images = document.querySelectorAll('img');
     let loader = document.querySelector('span.loader');
     let convertText = document.querySelector('span.text');
-    let downloadButton = document.querySelector('a.download');
 
     let filenames = [];
     //extract the image names into an array
-    for(let image of images){
+    for (let image of images) {
         filenames.push(image.dataset.name)
     }
     //activate loading animation
     loader.style.display = 'inline-block';
     convertText.style.display = 'none'
-
+    console.log(JSON.stringify(filenames))
     //Create a post request that'll send the image filenames to the '/pdf' route and receive the link to the PDF file
     fetch('/pdf', {
         method: 'POST',
@@ -32,23 +32,58 @@ convertButton.onclick = function(){
         },
         body: JSON.stringify(filenames)
     })
-    .then( (resp)=> {
-        return resp.text()
-    })
-    .then( (data) => {
-        //stop the loading animation
-        loader.style.display = 'none';
+        .then((resp) => {
+            return resp.text()
+        })
+        .then((data) => {
+            //stop the loading animation
+            loader.style.display = 'none';
 
-        //display the convert and download button
-        convertText.style.display = 'inline-block'
-        downloadButton.style.display = 'inline-block'
+            //display the convert and download button
+            convertText.style.display = 'inline-block'
+            downloadButton.style.display = 'inline-block'
 
-        //attach the address to the download button
-        downloadButton.href = data
+            //attach the address to the download button
+            downloadButton.href = data
+        })
+        .catch((error) => {
+            console.error(error.message)
+        })
+}
+
+// Event Listener when the download button is clicked
+downloadButton.onclick = function () {
+    let pdfLink = downloadButton.getAttribute('href');
+    console.log(JSON.stringify(pdfLink))
+
+    // // Create a URL object
+    // const urlObj = new URL(pdfLink);
+
+    // // Get the pathname and extract the filename
+    // const pathname = urlObj.pathname;
+    // const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+
+    // console.log(filename); 
+
+    fetch('/delete', {
+        method: 'POST',
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(pdfLink)
     })
-    .catch( (error) => {
-        console.error(error.message)
-    })    
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data); // Handle success
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
 

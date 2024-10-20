@@ -1,0 +1,39 @@
+{
+    "airports": 
+        [
+            {"id": "", "rwy": "", "type": "", "minima": "", "vis": ""},
+
+            {"id": "lszg", "rwy": "06", "type": "Circling", "minima": "900", "vis": "1900"},
+            {"id": "lszg", "rwy": "24", "type": "LNAV", "minima": "700", "vis": "1500"},
+        
+        
+            {"id": "lszb", "rwy": "14", "type": "ILS", "minima": "500", "vis": "1500"},
+            {"id": "lszb", "rwy": "14", "type": "LOC", "minima": "800", "vis": "1500"},
+            {"id": "lszb", "rwy": "14", "type": "LPV", "minima": "500", "vis": "1500"},
+            {"id": "lszb", "rwy": "32", "type": "Circling City", "minima": "2400", "vis": "5000"},
+            {"id": "lszb", "rwy": "32", "type": "Circling Romeo", "minima": "1600", "vis": "5000"},
+         
+        
+            {"id": "lsgc", "rwy": "05", "type": "LPV", "minima": "600", "vis": "1500"},
+            {"id": "lsgc", "rwy": "05", "type": "LNAV", "minima": "1100", "vis": "1500"},
+            {"id": "lsgc", "rwy": "23", "type": "LPV", "minima": "500", "vis": "1500"},
+            {"id": "lsgc", "rwy": "23", "type": "LNAV", "minima": "1100", "vis": "1500"},
+    
+        
+            {"id": "lsgg", "rwy": "04", "type": "ILS", "minima": "200", "vis": "550"},
+            {"id": "lsgg", "rwy": "04", "type": "LPV", "minima": "200", "vis": "550"},
+            {"id": "lsgg", "rwy": "04", "type": "LNAV", "minima": "500", "vis": "1400"},
+            {"id": "lsgg", "rwy": "22", "type": "ILS", "minima": "200", "vis": "550"},
+            {"id": "lsgg", "rwy": "22", "type": "LPV", "minima": "200", "vis": "550"},
+            {"id": "lsgg", "rwy": "22", "type": "LNAV", "minima": "500", "vis": "1500"},
+
+        
+            {"id": "lszh", "rwy": "14", "type": "ILS/LPV", "minima": "200", "vis": "550"},
+            {"id": "lszh", "rwy": "14", "type": "LOC/LNAV", "minima": "600", "vis": "1500"},
+            {"id": "lszh", "rwy": "28", "type": "ILS/LPV", "minima": "700", "vis": "4300"},
+            {"id": "lszh", "rwy": "28", "type": "LOC/LNAV", "minima": "900", "vis": "4300"}
+
+        ]
+    }
+
+
