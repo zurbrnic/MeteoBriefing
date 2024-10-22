@@ -23,7 +23,7 @@ convertButton.onclick = function () {
     //activate loading animation
     loader.style.display = 'inline-block';
     convertText.style.display = 'none'
-    console.log(JSON.stringify(filenames))
+
     //Create a post request that'll send the image filenames to the '/pdf' route and receive the link to the PDF file
     fetch('/pdf', {
         method: 'POST',
@@ -52,38 +52,97 @@ convertButton.onclick = function () {
 }
 
 // Event Listener when the download button is clicked
+// downloadButton.onclick = function () {
+//     let pdfLink = downloadButton.getAttribute('href');
+//     if (!pdfLink) {
+//         console.error('No PDF link found');
+//         return; // Exit if no link is found
+//     }
+
+//     console.log(JSON.stringify(pdfLink))
+
+//     // // Create a URL object
+//     // const urlObj = new URL(pdfLink);
+
+//     // // Get the pathname and extract the filename
+//     // const pathname = urlObj.pathname;
+//     // const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+
+//     // console.log(filename); 
+
+//     fetch('/delete', {
+//         method: 'POST',
+//         headers: {
+//             "Content-Type": "application/json"
+//         },
+//         body: JSON.stringify({ link: pdfLink }) // Sending as an object
+//     })
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error(`HTTP error! status: ${response.status}`);
+//             }
+//             return response.json();
+//         })
+//         .then(data => {
+//             console.log(data); // Handle success
+//         })
+//         .catch(error => {
+//             console.error('Error:', error);
+//         });
+// }
+
+
+
 downloadButton.onclick = function () {
     let pdfLink = downloadButton.getAttribute('href');
-    console.log(JSON.stringify(pdfLink))
-
-    // // Create a URL object
-    // const urlObj = new URL(pdfLink);
-
-    // // Get the pathname and extract the filename
-    // const pathname = urlObj.pathname;
-    // const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
-
-    // console.log(filename); 
-
-    fetch('/delete', {
-        method: 'POST',
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(pdfLink)
-    })
+    
+    if (!pdfLink) {
+        console.error('No PDF link found');
+        return; // Exit if no link is found
+    }
+    
+    // Start the download
+    fetch(pdfLink)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Failed to download file: ${response.status}`);
+            }
+            return response.blob(); // Convert response to Blob
+        })
+        .then(blob => {
+            // Create a URL for the Blob
+            const url = window.URL.createObjectURL(blob);
+            
+            // Create a link element to trigger the download
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = pdfLink.split('/').pop(); // Use the filename from the URL
+            document.body.appendChild(a);
+            a.click(); // Trigger the download
+            a.remove(); // Remove the link element
+            window.URL.revokeObjectURL(url); // Release the Blob URL
+            
+            // After the download, send a request to delete the file
+            return fetch('/delete', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ link: pdfLink }) // Sending the link for deletion
+            });
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error deleting file: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log(data); // Handle success
+            console.log('File deleted:', data); // Handle deletion success
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error:', error); // Handle any errors
         });
-}
+};
 
 

@@ -257,7 +257,7 @@ async function getDabs() {
 // Specify the path to the JSON file
 const filePathMinimas = './public/airport_minimas.json';
 let airportNames = ["lszg", "lszh", "eddn"];
-let newAirportJson = {};  // Empty JSON object
+// let newAirportJson = {};  // Empty JSON object
 
 // Read JSON function
 async function readJsonFile(airportList) {
@@ -269,13 +269,16 @@ async function readJsonFile(airportList) {
     // Parse the JSON data
     const jsonData = JSON.parse(data);
 
+    let newAirportJson = {};  // Empty JSON object
+
     const extractedAirports = jsonData.airports.filter(airport => airportList.includes(airport.id));
     newAirportJson = {
       airports: extractedAirports
     };
-    console.log(newAirportJson["airports"])
-    // Create table and pdf
-    // createPdfWithTable(newAirportJson)
+
+    // console.log(req.session.airportminimas["airports"])
+
+    return newAirportJson
 
   } catch (error) {
     console.error('Error reading JSON file:', error);
@@ -355,18 +358,23 @@ router.post('/addairports', function (req, res) {
   // }
 
   // Get Minimas from all selected airports
-  try {
-    readJsonFile(req.body.airportnames)
-  }
-  catch (error) {
-    console.log(error)
-  }
+  // let airportMinimas = readJsonFile(req.body.airportnames)
 
-  // Redirect to homepage
-  res.redirect('/')
+  // req.session.airportminimas = airportMinimas;
 
+  readJsonFile(req.body.airportnames)
+    .then(result => {
+      req.session.airportminimas = result;
+      req.session.airports = "slsdf";
+
+      // Redirect to homepage
+      res.redirect('/')
+
+    })
+    .catch(error => {
+      console.error('Error fetching airports:', error);
+    });
 })
-
 
 
 
@@ -374,7 +382,6 @@ router.post('/addairports', function (req, res) {
 router.post('/upload', upload.array('images'), function (req, res) {
   let files = req.files;
   let imgNames = [];
-  // console.log(req)
 
   //extract the filenames 
   for (i of files) {
@@ -417,7 +424,7 @@ router.post('/pdf', function (req, res, next) {
   for (let name of body) {
     doc.addPage()
     doc.image(path.join(__dirname, '..', `/public/images/${name}`), 20, 20, { width: 555.28, align: 'center', valign: 'center' })
-    console.log("dirname:  ", path.join(__dirname, '..'))
+    // console.log("dirname:  ", path.join(__dirname, '..'))
   }
 
   // Read Metars and Tafs from txt file and add to pdf doc
@@ -465,9 +472,13 @@ router.post('/pdf', function (req, res, next) {
           ['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility'],
         ];
 
+        // Test if session store is deleted
+        console.log("pdf  1 :  ", req.session);
+
+
         // Iterate through the airport array
-        for (let i = 0; i < newAirportJson.airports.length; i++) {
-          const airport = newAirportJson.airports[i];
+        for (let i = 0; i < req.session.airportminimas.airports.length; i++) {
+          const airport = req.session.airportminimas.airports[i];
           const newRow = ["", airport.id.toUpperCase(), airport.rwy, airport.type, airport.minima, airport.vis];
           tableData.push(newRow);
           // console.log(`ID: ${airport.id}`);
@@ -573,10 +584,35 @@ router.get('/new', function (req, res, next) {
 })
 
 
-router.post('/delete', function (req, res, next) { 
-  console.log("Delete route");
-  console.log(req.body); // This should show the parsed body
 
+
+router.post('/delete', function (req, res, next) {
+  console.log("Delete route");
+
+  const { link } = req.body; // Destructure to get the link
+  console.log(link); // This should show the parsed body
+
+  if (!link) {
+    return res.status(400).json({ error: 'Link is required' }); // Check if link is provided
+  }
+
+  console.log('Received link to delete:', link); // Log received link
+
+  const filePath = path.join(__dirname,'..', `/public/${link}`); // Construct the file path
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error('Error deleting file:', err);
+      return res.status(500).json({ error: 'File not found or unable to delete' });
+    }
+    res.json({ message: 'File deleted successfully' }); // Send a success response
+
+    //remove the data from the session
+    req.session.airportminimas = undefined
+    req.session.imagefiles = undefined
+
+    console.log(req.session)
+  });
 })
 
 

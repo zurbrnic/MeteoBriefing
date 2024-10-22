@@ -8,7 +8,8 @@ var logger = require('morgan');
 //include the express-session module
 var session = require('express-session');
 
-var indexRouter = require('./routes/index');
+// Include the routing logic defined in the index.js module into the main application file app.js
+var indexRouter = require('./routes/index'); 
 var usersRouter = require('./routes/users');
 
 var app = express();
@@ -26,10 +27,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 //activate it as an express.js session
 app.use(session({
   secret: 'YOUR_SECRET',
-  resave: true,
-  saveUninitialized: true
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
 }));
 
+// connect the routing logic from indexRouter to the root path. 
+// This router will handle all requests that start with the root path of the application.
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
