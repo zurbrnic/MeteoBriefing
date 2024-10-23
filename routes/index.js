@@ -287,6 +287,94 @@ async function readJsonFile(airportList) {
 
 
 
+// async function getNotamsAPI(airportList) {
+//   // GET Notam data from the FAA notam api
+//   const apiUrl = 'https://external-api.faa.gov/notamapi/v1/notams';
+//   const airports = ['LSZG'];
+
+//   for (let elem of airportList.split(/[,; ]+/)) {
+//     elem = elem.replace(' ', '');
+//     console.log(elem)
+
+//     const params = new URLSearchParams({
+//       icaoLocation: elem.toUpperCase(),
+//     });
+
+//     const fullUrl = `${apiUrl}?${params.toString()}`;
+//     console.log(fullUrl);
+
+//     fetch(fullUrl, {
+//       method: 'GET',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         // Add other headers if needed
+//         'client_id': '04b1a2e24d574321bbc0263f4b53ac44',
+//         'client_secret': '5cd7d9d58c6A4D13A459e2C51904073c',
+//       },
+//     })
+//       .then(response => {
+//         if (!response.ok) {
+//           throw new Error(`HTTP error! status: ${response.status}`);
+//         }
+//         return response.json();
+//       })
+//       .then(data => {
+//         console.log(data); // Process the returned data
+
+//         // return the fetched NOTAMS
+//         return data
+
+//       })
+//       .catch(error => {
+//         console.error('Error fetching NOTAMs:', error);
+//       });
+//   }
+// }
+
+async function getNotamsAPI(airportList) {
+  // GET NOTAM data from the FAA NOTAM API
+  const apiUrl = 'https://external-api.faa.gov/notamapi/v1/notams';
+  const airports = airportList.split(/[,; ]+/).map(airport => airport.trim().toUpperCase());
+
+  const fetchPromises = airports.map(async (airport) => {
+    const params = new URLSearchParams({
+      icaoLocation: airport,
+    });
+
+    const fullUrl = `${apiUrl}?${params.toString()}`;
+    console.log(fullUrl);
+
+    try {
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'client_id': '04b1a2e24d574321bbc0263f4b53ac44',
+          'client_secret': '5cd7d9d58c6A4D13A459e2C51904073c',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      // console.log(data); // Process the returned data
+      return data; // Return the fetched NOTAMs
+
+    } catch (error) {
+      console.error(`Error fetching NOTAMs for ${airport}:`, error);
+      return null; // Return null or handle the error as needed
+    }
+  });
+
+  // Wait for all fetch promises to resolve
+  const results = await Promise.all(fetchPromises);
+  return results; // Return all results
+}
+
+
+
 
 //multer file storage configuration
 let storage = multer.diskStorage({
@@ -344,7 +432,7 @@ router.post('/addairports', function (req, res) {
 
   console.log(" Airpot Names :   " + req.body.airportnames)
 
-  // Get Metar/Taf from all selected airports
+  // Get METAR/TAF from all selected airports
   try {
     metars = getMetarTaf(req.body.airportnames)
   }
@@ -365,6 +453,8 @@ router.post('/addairports', function (req, res) {
 
   // req.session.airportminimas = airportMinimas;
 
+
+  // Get Airport Minimas
   readJsonFile(req.body.airportnames)
     .then(result => {
       req.session.airportminimas = result;
@@ -377,50 +467,24 @@ router.post('/addairports', function (req, res) {
       console.error('Error fetching airports:', error);
     });
 
-  // GET Notam data from the FAA notam api
-  const apiUrl = 'https://external-api.faa.gov/notamapi/v1/notams';
-  const airports = ['LSZG'];
+  // Get NOTAMS
+  getNotamsAPI(req.body.airportnames)
+    .then(result => {
+      console.log("DATA", result[0].items[0].properties.coreNOTAMData.notam.location.toLowerCase())
 
-  for (let elem of req.body.airportnames.split(/[,; ]+/)) {
-    elem = elem.replace(' ', '');
-    console.log(elem)
+      // Add NOTAM Data to the session
+      for (let index = 0; index < result.length; index++) {
+        icaoID = result[index].items[0].properties.coreNOTAMData.notam.location.toLowerCase();
+        const propertyName = `notams_${icaoID}`;
+        req.session[propertyName] = result[index];
+      }
 
+      // console.log("Session ", req.session)
 
-    const params = new URLSearchParams({
-      // icaoLocation: req.body.airportnames.toUpperCase(),
-      icaoLocation: elem.toUpperCase(),
-      // icaoLocation: airports.join(','),
-    });
-
-    const fullUrl = `${apiUrl}?${params.toString()}`;
-    console.log(fullUrl);
-
-    fetch(fullUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        // Add other headers if needed
-        'client_id': '04b1a2e24d574321bbc0263f4b53ac44',
-        'client_secret': '5cd7d9d58c6A4D13A459e2C51904073c',
-      },
     })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log(data); // Process the returned data
-        const propertyName = `notams_${elem}`;
-        req.session[propertyName] = data;
-        console.log("Session ", req.session)
-
-      })
-      .catch(error => {
-        console.error('Error fetching NOTAMs:', error);
-      });
-  }
+    .catch(error => {
+      console.error('Error fetching airports:', error);
+    });
 
 })
 
@@ -566,6 +630,8 @@ router.post('/pdf', function (req, res, next) {
             }
           });
         });
+
+        // Add NOTAMS to PDF
 
         //end the process
         doc.end();
