@@ -324,6 +324,9 @@ router.get('/', function(req, res, next) {
 
 //
 router.post('/addairports', function (req, res) {
+  // Add airport names to the session
+  req.session.airportnames = req.body.airportnames;
+
   // delete old txt files
   fs.unlink(metarFile, (err) => {
     if (err) {
@@ -365,7 +368,6 @@ router.post('/addairports', function (req, res) {
   readJsonFile(req.body.airportnames)
     .then(result => {
       req.session.airportminimas = result;
-      req.session.airports = "slsdf";
 
       // Redirect to homepage
       res.redirect('/')
@@ -374,6 +376,52 @@ router.post('/addairports', function (req, res) {
     .catch(error => {
       console.error('Error fetching airports:', error);
     });
+
+  // GET Notam data from the FAA notam api
+  const apiUrl = 'https://external-api.faa.gov/notamapi/v1/notams';
+  const airports = ['LSZG'];
+
+  for (let elem of req.body.airportnames.split(/[,; ]+/)) {
+    elem = elem.replace(' ', '');
+    console.log(elem)
+
+
+    const params = new URLSearchParams({
+      // icaoLocation: req.body.airportnames.toUpperCase(),
+      icaoLocation: elem.toUpperCase(),
+      // icaoLocation: airports.join(','),
+    });
+
+    const fullUrl = `${apiUrl}?${params.toString()}`;
+    console.log(fullUrl);
+
+    fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add other headers if needed
+        'client_id': '04b1a2e24d574321bbc0263f4b53ac44',
+        'client_secret': '5cd7d9d58c6A4D13A459e2C51904073c',
+      },
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log(data); // Process the returned data
+        const propertyName = `notams_${elem}`;
+        req.session[propertyName] = data;
+        console.log("Session ", req.session)
+
+      })
+      .catch(error => {
+        console.error('Error fetching NOTAMs:', error);
+      });
+  }
+
 })
 
 
@@ -598,7 +646,7 @@ router.post('/delete', function (req, res, next) {
 
   console.log('Received link to delete:', link); // Log received link
 
-  const filePath = path.join(__dirname,'..', `/public/${link}`); // Construct the file path
+  const filePath = path.join(__dirname, '..', `/public/${link}`); // Construct the file path
 
   fs.unlink(filePath, (err) => {
     if (err) {
