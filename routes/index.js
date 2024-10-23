@@ -411,7 +411,7 @@ router.get('/', function(req, res, next) {
 
 
 //
-router.post('/addairports', function (req, res) {
+router.post('/addairports', async (req, res) => {
   // Add airport names to the session
   req.session.airportnames = req.body.airportnames;
 
@@ -454,37 +454,62 @@ router.post('/addairports', function (req, res) {
   // req.session.airportminimas = airportMinimas;
 
 
-  // Get Airport Minimas
-  readJsonFile(req.body.airportnames)
-    .then(result => {
-      req.session.airportminimas = result;
+  // // Get Airport Minimas
+  // readJsonFile(req.body.airportnames)
+  //   .then(result => {
+  //     req.session.airportminimas = result;
 
-      // Redirect to homepage
-      res.redirect('/')
+  //     // Redirect to homepage
+  //     res.redirect('/')
 
-    })
-    .catch(error => {
-      console.error('Error fetching airports:', error);
-    });
+  //   })
+  //   .catch(error => {
+  //     console.error('Error fetching airports:', error);
+  //   });
 
-  // Get NOTAMS
-  getNotamsAPI(req.body.airportnames)
-    .then(result => {
-      console.log("DATA", result[0].items[0].properties.coreNOTAMData.notam.location.toLowerCase())
+  // // Get NOTAMS
+  // getNotamsAPI(req.body.airportnames)
+  //   .then(result => {
+  //     // console.log("DATA", result[0].items[0].properties.coreNOTAMData.notam.location.toLowerCase())
 
-      // Add NOTAM Data to the session
-      for (let index = 0; index < result.length; index++) {
-        icaoID = result[index].items[0].properties.coreNOTAMData.notam.location.toLowerCase();
-        const propertyName = `notams_${icaoID}`;
-        req.session[propertyName] = result[index];
-      }
+  //     // Add NOTAM Data to the session
+  //     for (let index = 0; index < result.length; index++) {
+  //       icaoID = result[index].items[0].properties.coreNOTAMData.notam.location.toLowerCase();
+  //       const propertyName = `notams_${icaoID}`;
+  //       req.session[propertyName] = result[index];
+  //     }
 
-      // console.log("Session ", req.session)
+  //     // console.log("Session ", req.session)
 
-    })
-    .catch(error => {
-      console.error('Error fetching airports:', error);
-    });
+  //   })
+  //   .catch(error => {
+  //     console.error('Error fetching airports:', error);
+  //   });
+
+
+
+  try {
+    // Get Airport Minimas
+    const airportMinimas = await readJsonFile(req.body.airportnames);
+    req.session.airportminimas = airportMinimas;
+
+    // Get NOTAMs
+    const notamsResult = await getNotamsAPI(req.body.airportnames);
+
+    // Add NOTAM Data to the session
+    for (let index = 0; index < notamsResult.length; index++) {
+      const icaoID = notamsResult[index].items[0].properties.coreNOTAMData.notam.location.toLowerCase();
+      const propertyName = `notams_${icaoID}`;
+      req.session[propertyName] = notamsResult[index];
+    }
+
+    // Redirect to homepage
+    res.redirect('/');
+
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Internal Server Error'); // Send an appropriate error response
+  }
 
 })
 
@@ -632,6 +657,92 @@ router.post('/pdf', function (req, res, next) {
         });
 
         // Add NOTAMS to PDF
+        doc.addPage();
+
+        doc.fontSize(14).text("NOTAMS", {
+          underline: true,
+          align: 'center',
+          paragraphGap: 8,
+        });
+
+        for (airport of req.session.airportnames.split(/[,; ]+/)) {
+          let notamString = `notams_${airport}`;
+          console.log("NOTAM   ", req.session[notamString].items.length)
+
+          // Title with airport name and two horizontal lines
+          const yPosition1 = doc.y - 4;   // Position the line below the text
+          doc.moveTo(50, yPosition1)       // Start point of the line (x, y)
+            .lineTo(550, yPosition1)       // End point of the line (x, y)
+            .stroke();                    // Render the line
+
+          doc.fontSize(12);
+          doc.text(airport.toUpperCase(), {
+            align: 'center',
+            paragraphGap: 5,
+          })
+
+          const yPosition2 = doc.y - 4;   // Position the line below the text
+          doc.moveTo(50, yPosition2)       // Start point of the line (x, y)
+            .lineTo(550, yPosition2)       // End point of the line (x, y)
+            .stroke();                    // Render the line
+
+          doc.fontSize(9);
+
+          for (let i = 0; i < req.session[notamString].items.length; i++) {
+            // Deconstruct the notam message
+            let notamID = req.session[notamString].items[i].properties.coreNOTAMData.notam.number;
+            // let notamQualifier = ;
+            let notamLocationA = req.session[notamString].items[i].properties.coreNOTAMData.notam.location;
+            let notamEffDateB = req.session[notamString].items[i].properties.coreNOTAMData.notam.effectiveStart;
+            let notamExpDateC = req.session[notamString].items[i].properties.coreNOTAMData.notam.effectiveEnd;
+            let notamTextE = req.session[notamString].items[i].properties.coreNOTAMData.notam.text;
+            let notamLowLimF = req.session[notamString].items[i].properties.coreNOTAMData.notam.minimumFL;
+            let notamUppLimG = req.session[notamString].items[i].properties.coreNOTAMData.notam.maximumFL;
+
+            // Check the actuality of the notam
+            let effDate = new Date(notamEffDateB);
+            let expDate = new Date(notamExpDateC);
+            let currentDate = new Date();
+            const fiftyDaysAgo = new Date();
+            fiftyDaysAgo.setDate(currentDate.getDate() - 50);
+
+            // Check expiration date
+            if (!(notamExpDateC == "PERM")) {
+              // Check if expiration date is in the past and only add notam if thats not the case
+              if (expDate < currentDate) {
+                console.log('The expiration date is in the past.');
+              } else {
+                doc.font('Helvetica').text(notamID);
+                doc.font('Helvetica').text("A)  " + notamLocationA);
+                doc.font('Helvetica').text("B)  " + notamEffDateB);
+                doc.font('Helvetica').text("C)  " + notamExpDateC);
+                doc.font('Helvetica').text("E)  " + notamTextE);
+                doc.font('Helvetica').text("F)  FL" + notamLowLimF);
+                doc.font('Helvetica').text("G)  FL" + notamUppLimG);
+                doc.text(" ");
+              }
+            }
+            else if (effDate >= fiftyDaysAgo) {
+              doc.font('Helvetica').text(notamID);
+              doc.font('Helvetica').text("A)  " + notamLocationA);
+              doc.font('Helvetica').text("B)  " + notamEffDateB);
+              doc.font('Helvetica').text("C)  " + notamExpDateC);
+              doc.font('Helvetica').text("E)  " + notamTextE);
+              doc.font('Helvetica').text("F)  FL" + notamLowLimF);
+              doc.font('Helvetica').text("G)  FL" + notamUppLimG);
+              doc.text(" ");
+              console.log("The permanently created NOTAM is not older than 50 days")
+
+            }
+            else {
+              console.log("The permanently created NOTAM is older than 50 days")
+            }
+          }
+        }
+
+
+
+
 
         //end the process
         doc.end();
