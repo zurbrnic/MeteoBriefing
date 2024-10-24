@@ -35,142 +35,75 @@ require("dotenv").config();
 
 
 
-// Get Notams Function
-async function getNotams(airports) {
-  console.log("Get Notams")
-  airports = airports.replace(/,/g, "")
-  console.log(airports)
 
 
-  var notamurl = 'https://www.notams.faa.gov/dinsQueryWeb/'
 
-  const browser = await puppet.launch({
-    headless: true,
-    executablePath:
-      process.env.NODE_ENV === 'production'
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppet.executablePath(),
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      // '--single-process',
-      '--no-zygote',
-    ],
-  });
-
-  const page = await browser.newPage();
-
-  await page.goto(notamurl);
-
-  // Set screen size.
-  await page.setViewport({ width: 1080, height: 720 });
-
-  // Type into search box.
-  agreebtn = 'body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-dialog-buttonpane.ui-draggable > div.ui-dialog-buttonpane.ui-widget-content.ui-helper-clearfix > button'
-  textfield = 'body > table:nth-child(9) > tbody > tr > td:nth-child(1) > table > tbody > tr:nth-child(1) > td > form > table > tbody > tr > td:nth-child(2) > table > tbody > tr:nth-child(4) > td > textarea'
-
-  await page.locator(agreebtn).click();
-
-  // await page.locator(textfield).fill('lszb');
-  await page.locator('textarea[name="retrieveLocId"]').fill(airports);
-
-  const newpage = await page.locator('input[name="submit"]').click();
-  console.log("newpage  " + newpage);
-
-  const newPagePromise = new Promise(x => browser.once('targetcreated', target => x(target.page())));
-  const newPage = await newPagePromise;
-
-  // await page.waitForSelector('input[type="button"]');
-
-  const pages = await browser.pages();
-  console.log("newpage  " + newPage);
-  notampage1 = pages[2];
-  await notampage1.bringToFront();
-  await notampage1.setViewport({ width: 1080, height: 720 });
-
-  await notampage1.pdf({
-    path: "public/pdf/notams.pdf",
-  })
-
-  browser.close()
-}
-
-
-// getNotams(airportsNotam)
-
-
-let metarFile = './public/metar.txt';
-let tafFile = './public/taf.txt';
-
-// Get Metar and Taf Function
 function getMetarTaf(airports) {
-  console.log(" Get Metar and Tafs :    ")
+  console.log("Get Metar and Tafs:");
 
-  airports = airports.replace(",", "").split(" ")
-  let MetarList = []
-  let TafList = []
+  airports = airports.replace(",", "").split(" ");
+  let metarPromises = [];
+  let tafPromises = [];
 
-  for (element in airports) {
-    var metarurl = `https://api.checkwx.com/metar/${airports[element]}/decoded`
-    var config = {
+  // Fetch METARs
+  for (let airport of airports) {
+    const metarUrl = `https://api.checkwx.com/metar/${airport}/decoded`;
+    const config = {
       method: 'get',
-      url: metarurl,
+      url: metarUrl,
       headers: { 'X-API-Key': '734d635d87d745bd80a2e2d81b' }
     };
 
-    axios(config).then(function (response) {
-      // console.log(response.data["data"][0]["raw_text"])
-      //let metar = JSON.stringify(response.data["data"][0]["raw_text"])
-      let metar = (response.data["data"][0]["raw_text"])
-
-      return metar
-    })
-      .then(function (resp) {
-        MetarList.push("\n" + "\n" + resp)
-        let metar = resp + "\n\n"
-        fs.appendFile(metarFile, metar, (err) => {
-
-          // In case of a error throw err.
-          if (err) throw err;
+    metarPromises.push(
+      axios(config)
+        .then(response => {
+          const metar = response.data.data[0].raw_text;
+          return metar;
         })
-        return MetarList
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+        .catch(error => {
+          console.error(`Error fetching METAR for ${airport}:`, error);
+          return null; // Handle errors gracefully
+        })
+    );
   }
 
-  for (element in airports) {
-    var tafurl = `https://api.checkwx.com/taf/${airports[element]}/decoded`
-    var config = {
+  // Fetch TAFs
+  for (let airport of airports) {
+    const tafUrl = `https://api.checkwx.com/taf/${airport}/decoded`;
+    const config = {
       method: 'get',
-      url: tafurl,
+      url: tafUrl,
       headers: { 'X-API-Key': '734d635d87d745bd80a2e2d81b' }
     };
 
-    axios(config).then(function (response) {
-      // console.log(response.data["data"][0]["raw_text"])
-      //let metar = JSON.stringify(response.data["data"][0]["raw_text"])
-      let taf = (response.data["data"][0]["raw_text"])
-
-      return taf
-    })
-      .then(function (resp) {
-        TafList.push("\n" + "\n" + resp)
-        let taf = resp + "\n\n"
-        fs.appendFile(tafFile, taf, (err) => {
-
-          // In case of a error throw err.
-          if (err) throw err;
+    tafPromises.push(
+      axios(config)
+        .then(response => {
+          const taf = response.data.data[0].raw_text;
+          return taf;
         })
-        return TafList
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
+        .catch(error => {
+          console.error(`Error fetching TAF for ${airport}:`, error);
+          return null; // Handle errors gracefully
+        })
+    );
   }
+
+  // Wait for all METAR and TAF requests to complete
+  return Promise.all(metarPromises)
+    .then(metarResults => {
+      const MetarList = metarResults.filter(metar => metar !== null);
+      return Promise.all(tafPromises)
+        .then(tafResults => {
+          const TafList = tafResults.filter(taf => taf !== null);
+          return { MetarList, TafList }; // Return both lists
+        });
+    });
 }
-// getMetarTaf(AirportList)
+
+
+
+
 
 
 
@@ -256,12 +189,11 @@ async function getDabs() {
 
 // Specify the path to the JSON file
 const filePathMinimas = './public/airport_minimas.json';
-let airportNames = ["lszg", "lszh", "eddn"];
-// let newAirportJson = {};  // Empty JSON object
 
 // Read JSON function
 async function readJsonFile(airportList) {
-  airportList = airportList.replace(",", "").split(" ")
+  airportList = airportList.replace(/,/g, "").split(" ")
+
   try {
     // Read the file asynchronously
     const data = await fspromise.readFile(filePathMinimas, 'utf-8');
@@ -276,8 +208,6 @@ async function readJsonFile(airportList) {
       airports: extractedAirports
     };
 
-    // console.log(req.session.airportminimas["airports"])
-
     return newAirportJson
 
   } catch (error) {
@@ -287,49 +217,6 @@ async function readJsonFile(airportList) {
 
 
 
-// async function getNotamsAPI(airportList) {
-//   // GET Notam data from the FAA notam api
-//   const apiUrl = 'https://external-api.faa.gov/notamapi/v1/notams';
-//   const airports = ['LSZG'];
-
-//   for (let elem of airportList.split(/[,; ]+/)) {
-//     elem = elem.replace(' ', '');
-//     console.log(elem)
-
-//     const params = new URLSearchParams({
-//       icaoLocation: elem.toUpperCase(),
-//     });
-
-//     const fullUrl = `${apiUrl}?${params.toString()}`;
-//     console.log(fullUrl);
-
-//     fetch(fullUrl, {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         // Add other headers if needed
-//         'client_id': '04b1a2e24d574321bbc0263f4b53ac44',
-//         'client_secret': '5cd7d9d58c6A4D13A459e2C51904073c',
-//       },
-//     })
-//       .then(response => {
-//         if (!response.ok) {
-//           throw new Error(`HTTP error! status: ${response.status}`);
-//         }
-//         return response.json();
-//       })
-//       .then(data => {
-//         console.log(data); // Process the returned data
-
-//         // return the fetched NOTAMS
-//         return data
-
-//       })
-//       .catch(error => {
-//         console.error('Error fetching NOTAMs:', error);
-//       });
-//   }
-// }
 
 async function getNotamsAPI(airportList) {
   // GET NOTAM data from the FAA NOTAM API
@@ -402,93 +289,26 @@ let fileFilter = (req, file, callback) => {
 //initialize Multer with the configurations for storage and file filter
 var upload = multer({ storage, fileFilter: fileFilter });
 
-/*//create a '/' GET route that'll return the index.html file stored in the public/html folder
-router.get('/', function(req, res, next) {
-  res.sendFile(path.join(__dirname, '..','/public/html/index.html'));
-}); */
 
 
 
 
-//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////// Routes Handler ////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 router.post('/addairports', async (req, res) => {
   // Add airport names to the session
   req.session.airportnames = req.body.airportnames;
 
-  // delete old txt files
-  fs.unlink(metarFile, (err) => {
-    if (err) {
-      console.error(`Error removing file: ${err}`);
-      return;
-    }
-  });
-
-  fs.unlink(tafFile, (err) => {
-    if (err) {
-      console.error(`Error removing file: ${err}`);
-      return;
-    }
-  });
-
-  console.log(" Airpot Names :   " + req.body.airportnames)
-
-  // Get METAR/TAF from all selected airports
-  try {
-    metars = getMetarTaf(req.body.airportnames)
-  }
-  catch (error) {
-    console.log(error)
-  }
-
-  // Get NOTAMS from all selected airports and save pdf file
-  // try {
-  //   metars = getNotams(req.body.airportnames)
-  // }
-  // catch (error) {
-  //   console.log(error)
-  // }
-
-  // Get Minimas from all selected airports
-  // let airportMinimas = readJsonFile(req.body.airportnames)
-
-  // req.session.airportminimas = airportMinimas;
-
-
-  // // Get Airport Minimas
-  // readJsonFile(req.body.airportnames)
-  //   .then(result => {
-  //     req.session.airportminimas = result;
-
-  //     // Redirect to homepage
-  //     res.redirect('/')
-
-  //   })
-  //   .catch(error => {
-  //     console.error('Error fetching airports:', error);
-  //   });
-
-  // // Get NOTAMS
-  // getNotamsAPI(req.body.airportnames)
-  //   .then(result => {
-  //     // console.log("DATA", result[0].items[0].properties.coreNOTAMData.notam.location.toLowerCase())
-
-  //     // Add NOTAM Data to the session
-  //     for (let index = 0; index < result.length; index++) {
-  //       icaoID = result[index].items[0].properties.coreNOTAMData.notam.location.toLowerCase();
-  //       const propertyName = `notams_${icaoID}`;
-  //       req.session[propertyName] = result[index];
-  //     }
-
-  //     // console.log("Session ", req.session)
-
-  //   })
-  //   .catch(error => {
-  //     console.error('Error fetching airports:', error);
-  //   });
-
-
+  console.log(" Airport Names :   " + req.body.airportnames)
 
   try {
+    // Get METAR and TAFs
+    const { MetarList, TafList } = await getMetarTaf(req.body.airportnames);
+    req.session.metar = MetarList;
+    req.session.taf = TafList;
+
     // Get Airport Minimas
     const airportMinimas = await readJsonFile(req.body.airportnames);
     req.session.airportminimas = airportMinimas;
@@ -545,184 +365,128 @@ router.get('/', function (req, res, next) {
 });
 
 
-// Create PDF with images, Metar/Taf, Minimas, Notams and DABS
-router.post('/pdf', function (req, res, next) {
-
-  let body = req.body
-
-  //Create a new pdf
-  let doc = new PDFDocument({ size: 'A4', autoFirstPage: false });
-  let pdfName = 'pdf-' + Date.now() + '.pdf';
-
-  //store the pdf in the public/pdf folder
-  doc.pipe(fs.createWriteStream(path.join(__dirname, '..', `/public/pdf/${pdfName}`)));
-
-  //create the pdf pages and add the images
-  for (let name of body) {
-    doc.addPage()
-    doc.image(path.join(__dirname, '..', `/public/images/${name}`), 20, 20, { width: 555.28, align: 'center', valign: 'center' })
-    // console.log("dirname:  ", path.join(__dirname, '..'))
-  }
-
-  // Read Metars and Tafs from txt file and add to pdf doc
-
-  if (fs.existsSync(metarFile) && fs.existsSync(tafFile)) {
-    fs.readFile(metarFile, "utf8", (err, data) => {
-
-      // In case of a error throw err.
-      if (err) throw err;
-
-      let metars = data
-
-      fs.readFile(tafFile, "utf8", (err, data) => {
-        // In case of a error throw err.
-        if (err) throw err;
-
-        // Rearrange TAFs (new line for each new timeframe)
-        let splittaf = data.split(/(?=TEMPO)|(?=BECMG)|(?=PROB)/)
-        let tafs = splittaf.join("\n     ")
-
-        // Create Metar/Taf pdf page and add the relevant minimas
-        doc.addPage()
-        //METAR
-        doc.fontSize(14);
-        doc.text("METAR", {
-          underline: true,
-          align: 'center',
-          paragraphGap: 8,
-        })
-        doc.fontSize(10);
-        doc.text(metars)
-        // TAF
-        doc.fontSize(14);
-        doc.text("\n\n" + "TAF", {
-          underline: true,
-          align: 'center',
-          paragraphGap: 8,
-        })
-        doc.fontSize(10);
-        doc.text(tafs)
-
-        // Create Table with the relevant minimas and add to doc
-        // Define table data
-        const tableData = [
-          ['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility'],
-        ];
-
-        // Test if session store is deleted
-        console.log("pdf  1 :  ", req.session);
 
 
-        // Iterate through the airport array
-        for (let i = 0; i < req.session.airportminimas.airports.length; i++) {
-          const airport = req.session.airportminimas.airports[i];
-          const newRow = ["", airport.id.toUpperCase(), airport.rwy, airport.type, airport.minima, airport.vis];
-          tableData.push(newRow);
-          // console.log(`ID: ${airport.id}`);
-        }
-        // console.log(tableData)
 
-        const columnWidths = [80, 80, 80, 80, 80, 80];
-        const rowHeight = 25;
+router.post('/pdf', async function (req, res, next) {
+  try {
+    let body = req.body;
 
+    // Create a new pdf
+    let doc = new PDFDocument({ size: 'A4', autoFirstPage: false });
+    let pdfName = `pdf-${Date.now()}.pdf`;
+    const pdfDir = path.join(__dirname, '..', '/public/pdf');
 
-        // Draw table
-        doc.fontSize(8);
-        const yOffset = (doc.page.height) - 40;
-        // console.log("Length:  ", tableData.length)
+    // Ensure the directory exists
+    if (!fs.existsSync(pdfDir)) {
+      fs.mkdirSync(pdfDir, { recursive: true });
+    }
 
-        tableData.forEach((row, rowIndex) => {
-          row.forEach((cell, cellIndex) => {
-            const x = 30 + cellIndex * columnWidths[cellIndex];
-            // const y = 10 + rowIndex * rowHeight;
-            const y = yOffset - (1 + tableData.length) * rowHeight + rowIndex * rowHeight;
-            // const y = pageHeight - (rowIndex * rowHeight);
-            // console.log("Act. Height:  ", pageHeight - (rowIndex * rowHeight))
-            // console.log("y:   ", y)
+    // Store the pdf in the public/pdf folder and Pipe the PDF to a writable stream
+    const writeStream = fs.createWriteStream(path.join(pdfDir, pdfName));
+    doc.pipe(writeStream);
 
-            // Draw cell rectangle
-            doc.rect(x, y, columnWidths[cellIndex], rowHeight).strokeColor('black').stroke();
+    // Create the pdf pages and add the images
+    for (let name of body) {
+      doc.addPage();
+      doc.image(path.join(__dirname, '..', `/public/images/${name}`), 20, 20, { width: 555.28 });
+    }
 
-            if (rowIndex == 0) {
-              // Draw cell text for header
-              doc.font('Helvetica-Bold').text(cell, x + 5, y + 5, {
-                underline: true,
-                paragraphGap: 0,
-              });
-            } else {
-              // Draw cell text
-              doc.font('Helvetica').text(cell, x + 5, y + 5);
-            }
+    // Read Metars and Tafs from session
+    let metars = req.session.metar.join("\n\n");
+    let splittaf = req.session.taf.join("\n\n").split(/(?=TEMPO)|(?=BECMG)|(?=PROB)/);
+    let tafs = splittaf.join("\n     ");
+
+    // Create Metar/Taf pdf page
+    doc.addPage();
+    doc.fontSize(14).text("METAR", { underline: true, align: 'center', paragraphGap: 8 });
+    doc.fontSize(10).text(metars);
+    doc.fontSize(14).text("\n\nTAF", { underline: true, align: 'center', paragraphGap: 8 });
+    doc.fontSize(10).text(tafs);
+
+    console.log(req.session.airportminimas)
+
+    // Create table for minimas
+    const tableData = [['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility']];
+    for (let airport of req.session.airportminimas.airports) {
+      const newRow = ["", airport.id.toUpperCase(), airport.rwy, airport.type, airport.minima, airport.vis];
+      tableData.push(newRow);
+    }
+
+    const columnWidths = [80, 80, 80, 80, 80, 80];
+    const rowHeight = 25;
+    const yOffset = (doc.page.height) - 40;
+    doc.fontSize(8);
+
+    // Draw table
+    tableData.forEach((row, rowIndex) => {
+      row.forEach((cell, cellIndex) => {
+        const x = 30 + cellIndex * columnWidths[cellIndex];
+        const y = yOffset - (1 + tableData.length) * rowHeight + rowIndex * rowHeight;
+        // Draw cell rectangle
+        doc.rect(x, y, columnWidths[cellIndex], rowHeight).strokeColor('black').stroke();
+        if (rowIndex == 0) {
+          doc.font('Helvetica-Bold').text(cell, x + 5, y + 5, {
+            underline: true,
+            paragraphGap: 0,
           });
-        });
+        } else {
+          // Draw cell text
+          doc.font('Helvetica').text(cell, x + 5, y + 5);
+        }
+      });
+    });
 
-        // Add NOTAMS to PDF
-        doc.addPage();
+    // Add NOTAMS to PDF
+    doc.addPage().fontSize(14).text("NOTAMS", { underline: true, align: 'center', paragraphGap: 8 });
 
-        doc.fontSize(14).text("NOTAMS", {
-          underline: true,
+    for (const airport of req.session.airportnames.split(/[,; ]+/)) {
+      let notamString = `notams_${airport}`;
+      if (req.session[notamString]) {
+
+        // Title with airport name and two horizontal lines
+        const yPosition1 = doc.y - 4;   // Position the line below the text
+        doc.moveTo(50, yPosition1)       // Start point of the line (x, y)
+          .lineTo(550, yPosition1)       // End point of the line (x, y)
+          .stroke();                    // Render the line
+
+        doc.fontSize(12);
+        doc.text(airport.toUpperCase(), {
           align: 'center',
-          paragraphGap: 8,
-        });
+          paragraphGap: 5,
+        })
 
-        for (airport of req.session.airportnames.split(/[,; ]+/)) {
-          let notamString = `notams_${airport}`;
-          console.log("NOTAM   ", req.session[notamString].items.length)
+        const yPosition2 = doc.y - 4;   // Position the line below the text
+        doc.moveTo(50, yPosition2)       // Start point of the line (x, y)
+          .lineTo(550, yPosition2)       // End point of the line (x, y)
+          .stroke();                    // Render the line
 
-          // Title with airport name and two horizontal lines
-          const yPosition1 = doc.y - 4;   // Position the line below the text
-          doc.moveTo(50, yPosition1)       // Start point of the line (x, y)
-            .lineTo(550, yPosition1)       // End point of the line (x, y)
-            .stroke();                    // Render the line
+        doc.fontSize(9);
 
-          doc.fontSize(12);
-          doc.text(airport.toUpperCase(), {
-            align: 'center',
-            paragraphGap: 5,
-          })
+        for (let i = 0; i < req.session[notamString].items.length; i++) {
+          // Deconstruct the notam message
+          let notamID = req.session[notamString].items[i].properties.coreNOTAMData.notam.number;
+          // let notamQualifier = ;
+          let notamLocationA = req.session[notamString].items[i].properties.coreNOTAMData.notam.location;
+          let notamEffDateB = req.session[notamString].items[i].properties.coreNOTAMData.notam.effectiveStart;
+          let notamExpDateC = req.session[notamString].items[i].properties.coreNOTAMData.notam.effectiveEnd;
+          let notamTextE = req.session[notamString].items[i].properties.coreNOTAMData.notam.text;
+          let notamLowLimF = req.session[notamString].items[i].properties.coreNOTAMData.notam.minimumFL;
+          let notamUppLimG = req.session[notamString].items[i].properties.coreNOTAMData.notam.maximumFL;
 
-          const yPosition2 = doc.y - 4;   // Position the line below the text
-          doc.moveTo(50, yPosition2)       // Start point of the line (x, y)
-            .lineTo(550, yPosition2)       // End point of the line (x, y)
-            .stroke();                    // Render the line
+          // Check the actuality of the notam
+          let effDate = new Date(notamEffDateB);
+          let expDate = new Date(notamExpDateC);
+          let currentDate = new Date();
+          const fiftyDaysAgo = new Date();
+          fiftyDaysAgo.setDate(currentDate.getDate() - 50);
 
-          doc.fontSize(9);
-
-          for (let i = 0; i < req.session[notamString].items.length; i++) {
-            // Deconstruct the notam message
-            let notamID = req.session[notamString].items[i].properties.coreNOTAMData.notam.number;
-            // let notamQualifier = ;
-            let notamLocationA = req.session[notamString].items[i].properties.coreNOTAMData.notam.location;
-            let notamEffDateB = req.session[notamString].items[i].properties.coreNOTAMData.notam.effectiveStart;
-            let notamExpDateC = req.session[notamString].items[i].properties.coreNOTAMData.notam.effectiveEnd;
-            let notamTextE = req.session[notamString].items[i].properties.coreNOTAMData.notam.text;
-            let notamLowLimF = req.session[notamString].items[i].properties.coreNOTAMData.notam.minimumFL;
-            let notamUppLimG = req.session[notamString].items[i].properties.coreNOTAMData.notam.maximumFL;
-
-            // Check the actuality of the notam
-            let effDate = new Date(notamEffDateB);
-            let expDate = new Date(notamExpDateC);
-            let currentDate = new Date();
-            const fiftyDaysAgo = new Date();
-            fiftyDaysAgo.setDate(currentDate.getDate() - 50);
-
-            // Check expiration date
-            if (!(notamExpDateC == "PERM")) {
-              // Check if expiration date is in the past and only add notam if thats not the case
-              if (expDate < currentDate) {
-                console.log('The expiration date is in the past.');
-              } else {
-                doc.font('Helvetica').text(notamID);
-                doc.font('Helvetica').text("A)  " + notamLocationA);
-                doc.font('Helvetica').text("B)  " + notamEffDateB);
-                doc.font('Helvetica').text("C)  " + notamExpDateC);
-                doc.font('Helvetica').text("E)  " + notamTextE);
-                doc.font('Helvetica').text("F)  FL" + notamLowLimF);
-                doc.font('Helvetica').text("G)  FL" + notamUppLimG);
-                doc.text(" ");
-              }
-            }
-            else if (effDate >= fiftyDaysAgo) {
+          // Check expiration date
+          if (!(notamExpDateC == "PERM")) {
+            // Check if expiration date is in the past and only add notam if thats not the case
+            if (expDate < currentDate) {
+              console.log('The expiration date is in the past.');
+            } else {
               doc.font('Helvetica').text(notamID);
               doc.font('Helvetica').text("A)  " + notamLocationA);
               doc.font('Helvetica').text("B)  " + notamEffDateB);
@@ -731,64 +495,53 @@ router.post('/pdf', function (req, res, next) {
               doc.font('Helvetica').text("F)  FL" + notamLowLimF);
               doc.font('Helvetica').text("G)  FL" + notamUppLimG);
               doc.text(" ");
-              console.log("The permanently created NOTAM is not older than 50 days")
+            }
+          }
+          else if (effDate >= fiftyDaysAgo) {
+            doc.font('Helvetica').text(notamID);
+            doc.font('Helvetica').text("A)  " + notamLocationA);
+            doc.font('Helvetica').text("B)  " + notamEffDateB);
+            doc.font('Helvetica').text("C)  " + notamExpDateC);
+            doc.font('Helvetica').text("E)  " + notamTextE);
+            doc.font('Helvetica').text("F)  FL" + notamLowLimF);
+            doc.font('Helvetica').text("G)  FL" + notamUppLimG);
+            doc.text(" ");
+            console.log("The permanently created NOTAM is not older than 50 days")
 
-            }
-            else {
-              console.log("The permanently created NOTAM is older than 50 days")
-            }
+          }
+          else {
+            console.log("The permanently created NOTAM is older than 50 days")
           }
         }
+      }
+    }
 
+    // End the document
+    doc.end();
 
+    // Wait for the writeStream to finish
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+    });
 
+    // Concatenate Briefing PDF and DABS PDF
+    const files = [
+      path.join(pdfDir, pdfName),
+      // path.join(__dirname, '..', `/public/pdf/dabs.pdf`), // Uncomment if needed
+    ];
 
+    // Save as new file
+    await PDFMerge(files, { output: path.join(pdfDir, pdfName) });
 
-        //end the process
-        doc.end();
-
-        // Concatenate Briefing PDF with Notam PDF and DABS PDF
-        const files = [
-          path.join(__dirname, '..', `/public/pdf/${pdfName}`),
-          // path.join(__dirname, '..', `/public/pdf/notams.pdf`),
-          // path.join(__dirname, '..', `/public/pdf/dabs.pdf`),
-          // { file: path.join(__dirname, '..', `/public/pdf/${pdfName}`) }
-        ];
-
-        //Save as new file
-        PDFMerge(files, { output: path.join(__dirname, '..', `/public/pdf/${pdfName}`) })
-          .then((buffer) => {
-            //send the address back to the browser
-            res.send(`/pdf/${pdfName}`)
-          });
-
-
-        // delete metar taf files
-        fs.unlink(metarFile, (err) => {
-          if (err) {
-            console.error(`Error removing file: ${err}`);
-            return;
-          }
-
-          console.log(`File metar.txt has been successfully removed.`);
-        });
-
-        fs.unlink(tafFile, (err) => {
-          if (err) {
-            console.error(`Error removing file: ${err}`);
-            return;
-          }
-
-          console.log(`File taf.txt has been successfully removed.`);
-        });
-      })
-    })
+    // Send the address back to the browser
+    res.send(`/pdf/${pdfName}`);
+  } catch (error) {
+    console.error('Error creating PDF:', error);
+    res.status(500).send('Internal Server Error');
   }
-  else {
-    console.log(`File ${metarFile} or ${tafFile} does not exist!`)
-  }
+});
 
-})
 
 
 router.get('/new', function (req, res, next) {
@@ -811,34 +564,82 @@ router.get('/new', function (req, res, next) {
 
 
 
-router.post('/delete', function (req, res, next) {
+router.post('/delete', async function (req, res, next) {
   console.log("Delete route");
 
   const { link } = req.body; // Destructure to get the link
-  console.log(link); // This should show the parsed body
 
   if (!link) {
     return res.status(400).json({ error: 'Link is required' }); // Check if link is provided
   }
 
-  console.log('Received link to delete:', link); // Log received link
-
   const filePath = path.join(__dirname, '..', `/public/${link}`); // Construct the file path
 
-  fs.unlink(filePath, (err) => {
-    if (err) {
-      console.error('Error deleting file:', err);
-      return res.status(500).json({ error: 'File not found or unable to delete' });
+  try {
+    // Delete the PDF file
+    await fspromise.unlink(filePath, (err) => {
+      if (err) throw err;
+      console.log('error...');
+    });
+    console.log('File deleted successfully:', filePath);
+
+    // Delete the images
+    if (req.session.imagefiles) {
+      const filenames = req.session.imagefiles;
+      const deletePromises = filenames.map(file => {
+        const imagePath = path.join(__dirname, '..', `/public/images/${file}`);
+        return fspromise.unlink(imagePath).catch(err => {
+          console.error('Error deleting image:', err);
+        });
+      });
+      await Promise.all(deletePromises);
+      console.log('Images deleted successfully');
     }
-    res.json({ message: 'File deleted successfully' }); // Send a success response
 
-    //remove the data from the session
-    req.session.airportminimas = undefined
-    req.session.imagefiles = undefined
+    // Clean up session data
+    req.session.airportminimas = undefined;
+    req.session.airportnames = undefined;
+    req.session.imagefiles = undefined;
+    req.session.metar = undefined;
+    req.session.taf = undefined;
 
-    console.log(req.session)
-  });
-})
+
+    // Send a success response
+    res.json({ message: 'File and associated images deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting file:', err);
+    res.status(500).json({ error: 'File not found or unable to delete' });
+  }
+});
+
+
+
+router.get('/dabs', async (req, res) => {
+  const url = 'https://www.skybriefing.com/de/dabs?p_p_id=ch_skyguide_ibs_portal_dabs_DabsUI&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=APP&p_p_cacheability=cacheLevelPage&_ch_skyguide_ibs_portal_dabs_DabsUI_v-resourcePath=%2FAPP%2Fconnector%2F0%2F3%2Fhref%2Fdabs-2024-10-25.pdf';
+
+  try {
+    const response = await axios.get(url, { responseType: 'arraybuffer' });
+
+    console.log("response", response); // Convert buffer to string
+    // console.log('Response Status:', response.status);
+    // console.log('Response Headers:', response.headers);
+
+    // Set the content type for PDF only once
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="document.pdf"');
+
+    // Send the PDF data
+    res.send(response.data);
+  } catch (error) {
+    // Ensure that only one response is sent
+    console.error('Error fetching the PDF:', error);
+
+    // Send error response only if no response has been sent yet
+    if (!res.headersSent) {
+      res.status(500).send('Internal Server Error');
+    }
+  }
+});
 
 
 
