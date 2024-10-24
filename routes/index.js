@@ -39,7 +39,7 @@ require("dotenv").config();
 
 
 function getMetarTaf(airports) {
-  console.log("Get Metar and Tafs:");
+  console.log("-- Get Metar and Tafs");
 
   airports = airports.replace(",", "").split(" ");
   let metarPromises = [];
@@ -109,7 +109,7 @@ function getMetarTaf(airports) {
 
 // Get DABS Function
 async function getDabs() {
-  console.log("Get DABS")
+  console.log("-- Get DABS")
   console.log(`Exec. path :  ${puppet.executablePath()}`)
 
 
@@ -192,6 +192,7 @@ const filePathMinimas = './public/airport_minimas.json';
 
 // Read JSON function
 async function readJsonFile(airportList) {
+  console.log("-- Get Airport Minimas");
   airportList = airportList.replace(/,/g, "").split(" ")
 
   try {
@@ -204,6 +205,7 @@ async function readJsonFile(airportList) {
     let newAirportJson = {};  // Empty JSON object
 
     const extractedAirports = jsonData.airports.filter(airport => airportList.includes(airport.id));
+    // const extractedAirports = jsonData.airports.filter(airport => airportList.includes(airport.id)&& airport.type === 'LNAV');
     newAirportJson = {
       airports: extractedAirports
     };
@@ -219,6 +221,7 @@ async function readJsonFile(airportList) {
 
 
 async function getNotamsAPI(airportList) {
+  console.log("-- Get Notams");
   // GET NOTAM data from the FAA NOTAM API
   const apiUrl = 'https://external-api.faa.gov/notamapi/v1/notams';
   const airports = airportList.split(/[,; ]+/).map(airport => airport.trim().toUpperCase());
@@ -298,23 +301,25 @@ var upload = multer({ storage, fileFilter: fileFilter });
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 router.post('/addairports', async (req, res) => {
-  // Add airport names to the session
-  req.session.airportnames = req.body.airportnames;
+  const { airportNames } = req.body; // Destructure airportNames from req.body
 
-  console.log(" Airport Names :   " + req.body.airportnames)
+  // Add airport names to the session
+  req.session.airportnames = airportNames;
+
+  console.log("/addairports: Airport Names :   " + airportNames)
 
   try {
     // Get METAR and TAFs
-    const { MetarList, TafList } = await getMetarTaf(req.body.airportnames);
+    const { MetarList, TafList } = await getMetarTaf(airportNames);
     req.session.metar = MetarList;
     req.session.taf = TafList;
 
     // Get Airport Minimas
-    const airportMinimas = await readJsonFile(req.body.airportnames);
+    const airportMinimas = await readJsonFile(airportNames);
     req.session.airportminimas = airportMinimas;
 
     // Get NOTAMs
-    const notamsResult = await getNotamsAPI(req.body.airportnames);
+    const notamsResult = await getNotamsAPI(airportNames);
 
     // Add NOTAM Data to the session
     for (let index = 0; index < notamsResult.length; index++) {
@@ -322,15 +327,22 @@ router.post('/addairports', async (req, res) => {
       const propertyName = `notams_${icaoID}`;
       req.session[propertyName] = notamsResult[index];
     }
-
+    console.log("Redirecting")
     // Redirect to homepage
-    res.redirect('/');
+    // res.redirect('/');
+    res.json(req.session.airportminimas);
+    
 
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).send('Internal Server Error'); // Send an appropriate error response
   }
 
+})
+
+router.post('/addapproaches', async (req, res) => {
+  
+  res.json({message: "success"})
 })
 
 

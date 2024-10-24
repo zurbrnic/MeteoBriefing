@@ -28,11 +28,17 @@
           <p><input type='submit' id="upload-btn" value='upload' /></p>
         </form>
 
-        <form method='post' action='/addairports'>
+        <form id="airport-form">
           <p><label for="airport-list" id="airports-label">Airports:</label></p>
           <p><input type="text" id="airport-list" name="airportnames" value=""></p>
           <p><input type='submit' id="add-airport-btn" value='Add' /></p>
         </form>
+
+        <p id="appr-container-label" style="display: none;">Select Approaches to add to the minima list:</p>
+
+        <div id="appr-checkbox-container"></div>
+
+        <p id="add-appr-btn" style="cursor: pointer; display: none">Add approaches</p>
 
         <!-- <form method='get' action='/dabs'>
           <p><input type='submit' id="add-airport-btn" value='dabs' /></p>
@@ -45,6 +51,7 @@
       </footer>
       <script>
 
+        // File selection handling
         let fileUpload = document.getElementById('file-upload');
         let selectedFiles = document.querySelector('#selected-files code');
         let submitButton = document.querySelector('#upload-btn');
@@ -63,12 +70,116 @@
 
         let addAirportsBtn = document.getElementById('add-airport-btn');
         let AirportsList = document.getElementById('airport-list');
+        let airportForm = document.getElementById('airport-form');
+        let AddApprBtn = document.getElementById('add-appr-btn');
 
-        let airportNames = ''
-        addAirportsBtn.onclick = function () {
-          airportNames = AirportsList.value
-          console.log(airportNames)
+        // Add airports form handling
+        airportForm.onsubmit = function (event) {
+          event.preventDefault(); // Prevent the default form submission
+
+          const airportNames = AirportsList.value; // Get the value from the input
+          console.log("Selected airports:", airportNames);
+
+          fetch('/addairports', {
+            method: 'POST',
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ airportNames }) // Wrap it in an object
+          })
+            .then((resp) => {
+              if (!resp.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return resp.json(); // Parse the JSON response
+            })
+            .then((data) => {
+              console.log("Response data:", data);
+              // Optionally redirect or update the UI based on the response
+              // window.location.href = '/'; // Redirect to the main page
+
+              AirportsList.value = "";
+              addAirportsBtn.style.display = 'none';
+              AddApprBtn.style.display = 'block';
+              document.getElementById("appr-container-label").style.display = ('block');
+              document.getElementById('appr-checkbox-container').style.display = 'flex';
+
+
+              // Iterate over each property in the object
+              for (airport of airportNames.replace(/,/g, "").split(" ")) {
+                console.log("Airport: ", airport)
+                // Create Airport div container
+                const airportContainer = document.createElement('div');
+                airportContainer.style.padding = "10px 10px";
+
+                for (const key in data.airports) {
+                  if (data.airports[key].id == airport) {
+                    console.log(data.airports[key].id.toUpperCase(), data.airports[key].rwy, data.airports[key].type)
+
+                    // Create a new checkbox container
+                    const checkboxContainer = document.createElement('div');
+
+                    // Create a checkbox input
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = `dynamicCheckbox${key}`;
+                    checkbox.id = `dynamicCheckbox${key}`;
+
+                    // Create a label for the checkbox
+                    const label = document.createElement('label');
+                    label.textContent = `${data.airports[key].id.toUpperCase()} ${data.airports[key].rwy} ${data.airports[key].type}`; // Dynamic label
+                    label.setAttribute('for', checkbox.id);
+
+                    // Append the checkbox and label to the container
+                    checkboxContainer.appendChild(checkbox);
+                    checkboxContainer.appendChild(label);
+
+                    // Append the checkbox container to the main checkbox container
+                    airportContainer.appendChild(checkboxContainer);
+                  }
+                }
+                document.getElementById('appr-checkbox-container').appendChild(airportContainer);
+
+              }
+
+            })
+            .catch((error) => {
+              console.error('There was a problem with the fetch operation:', error);
+            });
         }
+
+
+        AddApprBtn.addEventListener('click', function () {
+
+          const checkedCheckboxes = Array.from(document.querySelectorAll('#appr-checkbox-container input[type="checkbox"]:checked'));
+          console.log("innerhtml : ",checkedCheckboxes[0].labels[0].innerHTML)
+          for (let i = 0; i < checkedCheckboxes.length; i++) {
+            const element = array[index];
+            
+          }
+
+          fetch('/addapproaches', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({message: "hello"})
+          })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json(); // Parse the JSON response
+            })
+            .then(data => {
+              console.log('Success:', data);
+              // Handle the response data here
+            })
+            .catch(error => {
+              console.error('There was a problem with the fetch operation:', error);
+            });
+        });
+
 
       </script>
     </main>
