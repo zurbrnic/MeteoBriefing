@@ -327,11 +327,9 @@ router.post('/addairports', async (req, res) => {
       const propertyName = `notams_${icaoID}`;
       req.session[propertyName] = notamsResult[index];
     }
-    console.log("Redirecting")
     // Redirect to homepage
     // res.redirect('/');
     res.json(req.session.airportminimas);
-
 
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -341,7 +339,6 @@ router.post('/addairports', async (req, res) => {
 })
 
 router.post('/addapproaches', async (req, res) => {
-  console.log("Body:  ", req.body.filteredAirports)
 
   // Filter the selected approaches from the airportminimas session object
   const matchingAirports = req.session.airportminimas.airports.filter(airport =>
@@ -354,9 +351,6 @@ router.post('/addapproaches', async (req, res) => {
 
   // Add the filtered object to the session for later use in the /pdf route to construct the minimas table
   req.session.filteredAirportMinimas = matchingAirports;
-
-  console.log("Filtered session minimas: ", req.session.filteredAirportMinimas)
-
 
   res.json({ message: "/addapproaches: Successfully added selected approaches and minimas to the session" })
 })
@@ -409,6 +403,9 @@ router.post('/pdf', async function (req, res, next) {
     if (!fs.existsSync(pdfDir)) {
       fs.mkdirSync(pdfDir, { recursive: true });
     }
+
+    // Add the filepath to the pdf to the session
+    req.session.pdffilepath = path.join(pdfDir, pdfName);
 
     // Store the pdf in the public/pdf folder and Pipe the PDF to a writable stream
     const writeStream = fs.createWriteStream(path.join(pdfDir, pdfName));
@@ -570,18 +567,68 @@ router.post('/pdf', async function (req, res, next) {
 
 
 
-router.get('/new', function (req, res, next) {
+router.get('/new', async function (req, res, next) {
   //delete the files stored in the session
-  let filenames = req.session.imagefiles;
+  // let filenames = req.session.imagefiles;
 
-  let deleteFiles = async (paths) => {
-    let deleting = paths.map((file) => unlink(path.join(__dirname, '..', `/public/images/${file}`)))
-    await Promise.all(deleting)
+  // let deleteFiles = async (paths) => {
+  //   let deleting = paths.map((file) => unlink(path.join(__dirname, '..', `/public/images/${file}`)))
+  //   await Promise.all(deleting)
+  // }
+  // deleteFiles(filenames)
+
+  let filePath = req.session.pdffilepath;
+
+  try {
+    // Check if the file exists
+    // await fspromise.access(filePath);
+    if (req.session.pdffilepath) {
+      // Delete the PDF file
+      await fspromise.unlink(filePath, (err) => {
+        if (err) throw err;
+        console.log('error...');
+      });
+    }
+
+    // Delete the images if they exist
+    if (req.session.imagefiles) {
+      const filenames = req.session.imagefiles;
+      const deletePromises = filenames.map(file => {
+        const imagePath = path.join(__dirname, '..', `/public/images/${file}`);
+
+        return fspromise.access(imagePath) // Check if the image file exists
+          .then(() => {
+            // If the file exists, delete it
+            return fspromise.unlink(imagePath);
+          })
+          .then(() => {
+            console.log(`/new -- Image ${imagePath} deleted successfully.`);
+          })
+          .catch(err => {
+            if (err.code === 'ENOENT') {
+              console.log(`/new -- Image ${imagePath} does not exist, skipping.`);
+            } else {
+              console.error('Error deleting image:', err);
+            }
+          });
+      });
+
+      await Promise.all(deletePromises);
+      console.log('/new -- All image deletion attempts completed.');
+    }
+
+    // Clean up session data
+    req.session.airportminimas = undefined;
+    req.session.filteredAirportMinimas = undefined;
+    req.session.airportnames = undefined;
+    req.session.imagefiles = undefined;
+    req.session.metar = undefined;
+    req.session.taf = undefined;
+
+  } catch (err) {
+    console.error('/new -- Error deleting file:', err);
+    res.status(500).json({ error: 'File not found or unable to delete' });
   }
-  deleteFiles(filenames)
-
-  //remove the data from the session
-  req.session.imagefiles = undefined
 
   //redirect to the root URL
   res.redirect('/')
