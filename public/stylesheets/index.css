@@ -9,13 +9,14 @@ p#selected-files {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 10pt;
 }
 
 #select-files {
     display: inline-block;
-    font-size: 25pt;
+    font-size: 16pt;
     cursor: pointer;
-    padding: 5px 45px;
+    padding: 5px 25px;
     border-radius: 25px;
     color: white;
     background-color: #a28f81;
@@ -39,26 +40,27 @@ input[type=file] {
     background-color: #a28f81;
 }
 
-/*label {display: inline-block;font-size:25pt;cursor:pointer;padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
-label:hover {background-color: #766254;}*/
+#upload-btn:hover {
+    background-color: #766254;
+}
 
 
 /* Add airport input and button*/
-#airports-label {
+.section-label {
+    width: 100%;
     display: inline-block;
     font-size: 25pt;
-    margin-top: 50pt;
-    padding: 5px 45px;
-    border-radius: 25px;
+    margin-top: 10pt;
+    padding: 5px 0px;
+    /* border-radius: 25px; */
     color: white;
-    background-color: #a28f81;
+    background-color: #a99f98;
 }
 
-/*#airports-label:hover {background-color: #766254;}*/
 
 #airport-list {
     display: inline-block;
-    margin: 22pt;
+    margin: 15pt;
     /* color: #31302f; */
     color: #908e8c;
     width: 30%
@@ -158,6 +160,24 @@ label:hover {background-color: #766254;}*/
     /* Border widths for the checkmark shape */
     transform: rotate(45deg);
     /* Rotate to make a checkmark */
+}
+
+#add-appr-btn {
+    display: none;
+    font-size: 16pt;
+    cursor: pointer;
+    padding: 5px 25px;
+    border-radius: 25px;
+    color: white;
+    background-color: #a28f81;
+}
+
+#add-appr-btn:hover {
+    background-color: #766254;
+}
+
+#appr-added-label {
+    font-size: 10pt;
 }
 
 

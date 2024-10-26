@@ -17,8 +17,8 @@ p {font-size:14pt;text-align: center;margin-bottom: 25px;}
 
 header, footer {border: 2px solid #ececec;}
 
-article {padding:20px;flex-grow: 1;background-color: #fff7f0;}
-footer p {margin-bottom: 0;font-size: 16pt;}
+article {padding:0px;flex-grow: 1;background-color: #fff7f0;}
+footer p {margin-bottom: 0;font-size: 12pt;}
 
 @media screen and (max-width: 380px) {
     footer p {font-size: 12pt;}
