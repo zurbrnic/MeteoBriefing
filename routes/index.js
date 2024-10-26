@@ -51,7 +51,7 @@ function getMetarTaf(airports) {
     const config = {
       method: 'get',
       url: metarUrl,
-      headers: { 'X-API-Key': '734d635d87d745bd80a2e2d81b' }
+      headers: { 'X-API-Key': process.env.METAR_API_KEY }
     };
 
     metarPromises.push(
@@ -73,7 +73,7 @@ function getMetarTaf(airports) {
     const config = {
       method: 'get',
       url: tafUrl,
-      headers: { 'X-API-Key': '734d635d87d745bd80a2e2d81b' }
+      headers: { 'X-API-Key': process.env.METAR_API_KEY }
     };
 
     tafPromises.push(
@@ -239,8 +239,8 @@ async function getNotamsAPI(airportList) {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'client_id': '04b1a2e24d574321bbc0263f4b53ac44',
-          'client_secret': '5cd7d9d58c6A4D13A459e2C51904073c',
+          'client_id': process.env.NOTAM_API_CLIENT_ID,
+          'client_secret': process.env.NOTAM_API_CLIENT_SECRET,
         },
       });
 
