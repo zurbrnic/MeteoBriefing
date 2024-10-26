@@ -86,6 +86,19 @@ input[type=file] {
 
 
 /* Style the Minima Checkboxes*/
+
+#appr-checkbox-container {
+    display: flex;
+    flex-wrap: wrap;
+    /* Allows items to wrap to the next line */
+}
+
+.airport-container {
+    width: 170px;
+    /* flex: 1 1 200px; Allows the item to grow and shrink, and sets a base width */
+    margin: 10px;
+}
+
 .container {
     display: inline-block;
     position: relative;

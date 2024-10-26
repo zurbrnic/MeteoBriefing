@@ -622,6 +622,7 @@ router.get('/new', async function (req, res, next) {
     req.session.filteredAirportMinimas = undefined;
     req.session.airportnames = undefined;
     req.session.imagefiles = undefined;
+    req.session.pdffilepath = undefined;
     req.session.metar = undefined;
     req.session.taf = undefined;
 
@@ -673,6 +674,7 @@ router.post('/delete', async function (req, res, next) {
     req.session.filteredAirportMinimas = undefined;
     req.session.airportnames = undefined;
     req.session.imagefiles = undefined;
+    req.session.pdffilepath = undefined;
     req.session.metar = undefined;
     req.session.taf = undefined;
 

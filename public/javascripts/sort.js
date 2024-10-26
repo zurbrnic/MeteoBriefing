@@ -51,46 +51,6 @@ convertButton.onclick = function () {
         })
 }
 
-// Event Listener when the download button is clicked
-// downloadButton.onclick = function () {
-//     let pdfLink = downloadButton.getAttribute('href');
-//     if (!pdfLink) {
-//         console.error('No PDF link found');
-//         return; // Exit if no link is found
-//     }
-
-//     console.log(JSON.stringify(pdfLink))
-
-//     // // Create a URL object
-//     // const urlObj = new URL(pdfLink);
-
-//     // // Get the pathname and extract the filename
-//     // const pathname = urlObj.pathname;
-//     // const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
-
-//     // console.log(filename); 
-
-//     fetch('/delete', {
-//         method: 'POST',
-//         headers: {
-//             "Content-Type": "application/json"
-//         },
-//         body: JSON.stringify({ link: pdfLink }) // Sending as an object
-//     })
-//         .then(response => {
-//             if (!response.ok) {
-//                 throw new Error(`HTTP error! status: ${response.status}`);
-//             }
-//             return response.json();
-//         })
-//         .then(data => {
-//             console.log(data); // Handle success
-//         })
-//         .catch(error => {
-//             console.error('Error:', error);
-//         });
-// }
-
 
 
 downloadButton.onclick = function () {
@@ -139,6 +99,7 @@ downloadButton.onclick = function () {
         })
         .then(data => {
             console.log('File deleted:', data); // Handle deletion success
+
         })
         .catch(error => {
             console.error('Error:', error); // Handle any errors

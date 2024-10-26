@@ -121,6 +121,7 @@
                 console.log("Airport: ", airport)
                 // Create Airport div container
                 const airportContainer = document.createElement('div');
+                airportContainer.className = 'airport-container';
                 airportContainer.style.padding = "10px 10px";
 
                 for (const key in data.airports) {
@@ -134,8 +135,8 @@
                     // Create a checkbox input
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.name = `dynamicCheckbox${key}`;
-                    checkbox.id = `dynamicCheckbox${key}`;
+                    checkbox.name = `dynamicCheckbox${data.airports[key].id}_${key}`;
+                    checkbox.id = `dynamicCheckbox${data.airports.id}_${key}`;
 
                     // Create a label for the checkbox
                     const label = document.createElement('label');
@@ -170,49 +171,57 @@
 
 
         AddApprBtn.addEventListener('click', function () {
-          // Style the checkboxes
-          ApprCheckboxContainer.style.display = 'none';
-          AppContainerLabel.style.display = 'none'
-          ApprAddedLabel.style.display = 'block';
 
           // Get all texts from the checkboxes which are checked
           const checkedCheckboxes = Array.from(document.querySelectorAll('#appr-checkbox-container input[type="checkbox"]:checked'));
-
-          // Create new JSON object and add the selected appr id, rwy, types
-          const filteredMinimas = {
-            filteredAirports: [],
-          };
-          for (let i = 0; i < checkedCheckboxes.length; i++) {
-            // console.log("innerhtml : ", checkedCheckboxes[i].labels[0].textContent.split(' '));
-            let splitCheckboxText = checkedCheckboxes[i].labels[0].textContent.split(' ');
-            let newEntry = { id: splitCheckboxText[0], rwy: splitCheckboxText[1], type: splitCheckboxText[2] };
-            filteredMinimas.filteredAirports.push(newEntry);
-
+          
+          if (!checkedCheckboxes.length) {
+            ApprAddedLabel.textContent = 'Please select minimum 1 approach!'
+            ApprAddedLabel.style.display = 'block';
           }
+          else {
+            // Style the checkboxes
+            ApprCheckboxContainer.style.display = 'none';
+            AppContainerLabel.style.display = 'none'
+            ApprAddedLabel.textContent = 'Approaches successfully selected'
+            ApprAddedLabel.style.display = 'block';
 
-          console.log("Filtered Minimas:  ", filteredMinimas)
+            // Create new JSON object and add the selected appr id, rwy, types
+            const filteredMinimas = {
+              filteredAirports: [],
+            };
+            for (let i = 0; i < checkedCheckboxes.length; i++) {
+              // console.log("innerhtml : ", checkedCheckboxes[i].labels[0].textContent.split(' '));
+              let splitCheckboxText = checkedCheckboxes[i].labels[0].textContent.split(' ');
+              let newEntry = { id: splitCheckboxText[0], rwy: splitCheckboxText[1], type: splitCheckboxText[2] };
+              filteredMinimas.filteredAirports.push(newEntry);
 
-          // Post request to the addapproaches route with the filtered approaches as body
-          fetch('/addapproaches', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(filteredMinimas)
-          })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
-              return response.json(); // Parse the JSON response
+            }
+
+            console.log("Filtered Minimas:  ", filteredMinimas)
+
+            // Post request to the addapproaches route with the filtered approaches as body
+            fetch('/addapproaches', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(filteredMinimas)
             })
-            .then(data => {
-              console.log('Success:', data);
-              // Handle the response data here
-            })
-            .catch(error => {
-              console.error('There was a problem with the fetch operation:', error);
-            });
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
+                }
+                return response.json(); // Parse the JSON response
+              })
+              .then(data => {
+                console.log('Success:', data);
+                // Handle the response data here
+              })
+              .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+              });
+          }
         });
 
 
