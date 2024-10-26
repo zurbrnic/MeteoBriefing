@@ -331,7 +331,7 @@ router.post('/addairports', async (req, res) => {
     // Redirect to homepage
     // res.redirect('/');
     res.json(req.session.airportminimas);
-    
+
 
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -341,8 +341,24 @@ router.post('/addairports', async (req, res) => {
 })
 
 router.post('/addapproaches', async (req, res) => {
-  
-  res.json({message: "success"})
+  console.log("Body:  ", req.body.filteredAirports)
+
+  // Filter the selected approaches from the airportminimas session object
+  const matchingAirports = req.session.airportminimas.airports.filter(airport =>
+    req.body.filteredAirports.some(filtered =>
+      filtered.id.toLowerCase() === airport.id &&
+      filtered.rwy === airport.rwy &&
+      filtered.type === airport.type
+    )
+  );
+
+  // Add the filtered object to the session for later use in the /pdf route to construct the minimas table
+  req.session.filteredAirportMinimas = matchingAirports;
+
+  console.log("Filtered session minimas: ", req.session.filteredAirportMinimas)
+
+
+  res.json({ message: "/addapproaches: Successfully added selected approaches and minimas to the session" })
 })
 
 
@@ -416,11 +432,9 @@ router.post('/pdf', async function (req, res, next) {
     doc.fontSize(14).text("\n\nTAF", { underline: true, align: 'center', paragraphGap: 8 });
     doc.fontSize(10).text(tafs);
 
-    console.log(req.session.airportminimas)
-
     // Create table for minimas
     const tableData = [['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility']];
-    for (let airport of req.session.airportminimas.airports) {
+    for (let airport of req.session.filteredAirportMinimas) {
       const newRow = ["", airport.id.toUpperCase(), airport.rwy, airport.type, airport.minima, airport.vis];
       tableData.push(newRow);
     }
@@ -593,7 +607,6 @@ router.post('/delete', async function (req, res, next) {
       if (err) throw err;
       console.log('error...');
     });
-    console.log('File deleted successfully:', filePath);
 
     // Delete the images
     if (req.session.imagefiles) {
@@ -610,6 +623,7 @@ router.post('/delete', async function (req, res, next) {
 
     // Clean up session data
     req.session.airportminimas = undefined;
+    req.session.filteredAirportMinimas = undefined;
     req.session.airportnames = undefined;
     req.session.imagefiles = undefined;
     req.session.metar = undefined;

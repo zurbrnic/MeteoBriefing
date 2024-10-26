@@ -30,7 +30,8 @@
 
         <form id="airport-form">
           <p><label for="airport-list" id="airports-label">Airports:</label></p>
-          <p><input type="text" id="airport-list" name="airportnames" onfocus="this.value=''" value="e.g. LSZG, LSZB"></p>
+          <p><input type="text" id="airport-list" name="airportnames" onfocus="this.value=''" value="e.g. LSZG, LSZB">
+          </p>
           <p><input type='submit' id="add-airport-btn" value='Add' /></p>
         </form>
 
@@ -159,20 +160,30 @@
 
 
         AddApprBtn.addEventListener('click', function () {
-
+          // Get all texts from the checkboxes which are checked
           const checkedCheckboxes = Array.from(document.querySelectorAll('#appr-checkbox-container input[type="checkbox"]:checked'));
-          console.log("innerhtml : ",checkedCheckboxes[0].labels[0].innerHTML)
-          // for (let i = 0; i < checkedCheckboxes.length; i++) {
-          //   const element = array[index];
-            
-          // }
+          
+          // Create new JSON object and add the selected appr id, rwy, types
+          const filteredMinimas = {
+            filteredAirports: [],
+          };
+          for (let i = 0; i < checkedCheckboxes.length; i++) {
+            // console.log("innerhtml : ", checkedCheckboxes[i].labels[0].textContent.split(' '));
+            let splitCheckboxText = checkedCheckboxes[i].labels[0].textContent.split(' ');
+            let newEntry = {id: splitCheckboxText[0], rwy: splitCheckboxText[1], type: splitCheckboxText[2]};
+            filteredMinimas.filteredAirports.push(newEntry);
 
+          }
+
+          console.log("Filtered Minimas:  ", filteredMinimas)
+
+          // Post request to the addapproaches route with the filtered approaches as body
           fetch('/addapproaches', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({message: "hello"})
+            body: JSON.stringify(filteredMinimas)
           })
             .then(response => {
               if (!response.ok) {
