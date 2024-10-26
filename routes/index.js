@@ -1,12 +1,3 @@
-/*var express = require('express');
-var router = express.Router();
-
-/* GET home page. 
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
-
-module.exports = router;*/
 
 
 //import the multer library
@@ -429,6 +420,7 @@ router.post('/pdf', async function (req, res, next) {
     doc.fontSize(14).text("\n\nTAF", { underline: true, align: 'center', paragraphGap: 8 });
     doc.fontSize(10).text(tafs);
 
+    doc.addPage().fontSize(14).text("Approaches Minima", { underline: true, align: 'center', paragraphGap: 8 });
     // Create table for minimas
     const tableData = [['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility']];
     for (let airport of req.session.filteredAirportMinimas) {
@@ -444,8 +436,9 @@ router.post('/pdf', async function (req, res, next) {
     // Draw table
     tableData.forEach((row, rowIndex) => {
       row.forEach((cell, cellIndex) => {
-        const x = 30 + cellIndex * columnWidths[cellIndex];
-        const y = yOffset - (1 + tableData.length) * rowHeight + rowIndex * rowHeight;
+        const x = 40 + cellIndex * columnWidths[cellIndex];
+        // const y = yOffset - (1 + tableData.length) * rowHeight + rowIndex * rowHeight;
+        const y = 120 + rowIndex * rowHeight;
         // Draw cell rectangle
         doc.rect(x, y, columnWidths[cellIndex], rowHeight).strokeColor('black').stroke();
         if (rowIndex == 0) {
@@ -568,14 +561,6 @@ router.post('/pdf', async function (req, res, next) {
 
 
 router.get('/new', async function (req, res, next) {
-  //delete the files stored in the session
-  // let filenames = req.session.imagefiles;
-
-  // let deleteFiles = async (paths) => {
-  //   let deleting = paths.map((file) => unlink(path.join(__dirname, '..', `/public/images/${file}`)))
-  //   await Promise.all(deleting)
-  // }
-  // deleteFiles(filenames)
 
   let filePath = req.session.pdffilepath;
 
