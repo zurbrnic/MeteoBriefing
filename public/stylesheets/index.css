@@ -1,33 +1,184 @@
-p.title {font-size:14pt;}
-p#selected-files {display:none;white-space: nowrap;overflow:hidden;text-overflow: ellipsis;}
+p.title {
+    font-size: 14pt;
+}
 
-#select-files {display: inline-block;font-size:25pt;cursor:pointer;padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
-#select-files:hover {background-color: #766254;}
 
-input[type=file] {display: none;}
-#upload-btn {display: none;font-size:16pt;cursor:pointer;padding: 5px 25px;border-radius:25px;color:white;background-color:#a28f81;}
+/* Image File Upload */
+p#selected-files {
+    display: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#select-files {
+    display: inline-block;
+    font-size: 25pt;
+    cursor: pointer;
+    padding: 5px 45px;
+    border-radius: 25px;
+    color: white;
+    background-color: #a28f81;
+}
+
+#select-files:hover {
+    background-color: #766254;
+}
+
+input[type=file] {
+    display: none;
+}
+
+#upload-btn {
+    display: none;
+    font-size: 16pt;
+    cursor: pointer;
+    padding: 5px 25px;
+    border-radius: 25px;
+    color: white;
+    background-color: #a28f81;
+}
 
 /*label {display: inline-block;font-size:25pt;cursor:pointer;padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
 label:hover {background-color: #766254;}*/
 
-#airports-label {display: inline-block;font-size:25pt; margin-top: 50pt; padding: 5px 45px;border-radius:25px;color:white;background-color: #a28f81;}
+
+/* Add airport input and button*/
+#airports-label {
+    display: inline-block;
+    font-size: 25pt;
+    margin-top: 50pt;
+    padding: 5px 45px;
+    border-radius: 25px;
+    color: white;
+    background-color: #a28f81;
+}
+
 /*#airports-label:hover {background-color: #766254;}*/
 
-#airport-list {display: inline-block; margin: 22pt;color: #31302f;width: 30%}
+#airport-list {
+    display: inline-block;
+    margin: 22pt;
+    /* color: #31302f; */
+    color: #908e8c;
+    width: 30%
+}
 
-#add-airport-btn {font-size:16pt;cursor:pointer;padding: 5px 25px;border-radius:25px;color:white;background-color:#a28f81;}
-#add-airport-btn:hover {background-color: #766254;}
+#airport-list:focus {
+    color: #31302f;
+}
+
+
+#add-airport-btn {
+    font-size: 16pt;
+    cursor: pointer;
+    padding: 5px 25px;
+    border-radius: 25px;
+    color: white;
+    background-color: #a28f81;
+}
+
+#add-airport-btn:hover {
+    background-color: #766254;
+}
+
+
+/* Style the Minima Checkboxes*/
+.container {
+    display: inline-block;
+    position: relative;
+    padding-left: 35px;
+    /* Space for the checkbox */
+    cursor: pointer;
+    font-size: 16px;
+    /* Font size */
+    user-select: none;
+    /* Prevent text selection */
+}
+
+.container input {
+    position: absolute;
+    opacity: 0;
+    /* Hide the default checkbox */
+    cursor: pointer;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 15px;
+    /* Height of the custom checkbox */
+    width: 15px;
+    /* Width of the custom checkbox */
+    background-color: #eee;
+    /* Background color */
+    border: 1px solid #ccc;
+    /* Border color */
+    border-radius: 4px;
+    /* Rounded corners */
+}
+
+.container:hover input~.checkmark {
+    background-color: #ddd;
+    /* Change background on hover */
+}
+
+.container input:checked~.checkmark {
+    background-color: #a28f81;
+    /* Background color when checked */
+    border-color: #a28f81;
+    /* Border color when checked */
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    /* Hide the checkmark initially */
+}
+
+.container input:checked~.checkmark:after {
+    display: block;
+    /* Show the checkmark when checked */
+}
+
+.container .checkmark:after {
+    left: 4px;
+    /* Position the checkmark */
+    top: 3px;
+    /* Position the checkmark */
+    width: 3px;
+    /* Width of the checkmark */
+    height: 6px;
+    /* Height of the checkmark */
+    border: solid white;
+    /* Color of the checkmark */
+    border-width: 0 3px 3px 0;
+    /* Border widths for the checkmark shape */
+    transform: rotate(45deg);
+    /* Rotate to make a checkmark */
+}
 
 
 @media screen and (max-width: 380px) {
-    p.title {font-size: 14pt;}
+    p.title {
+        font-size: 14pt;
+    }
 }
 
 @media screen and (max-width: 300px) {
-    p.title {font-size: 14pt;}
-    label {font-size: 14pt;}
+    p.title {
+        font-size: 14pt;
+    }
+
+    label {
+        font-size: 14pt;
+    }
 }
 
 @media screen and (max-width: 250px) {
-    label {padding: 5px 35px;}
+    label {
+        padding: 5px 35px;
+    }
 }

@@ -30,11 +30,11 @@
 
         <form id="airport-form">
           <p><label for="airport-list" id="airports-label">Airports:</label></p>
-          <p><input type="text" id="airport-list" name="airportnames" value=""></p>
+          <p><input type="text" id="airport-list" name="airportnames" onfocus="this.value=''" value="e.g. LSZG, LSZB"></p>
           <p><input type='submit' id="add-airport-btn" value='Add' /></p>
         </form>
 
-        <p id="appr-container-label" style="display: none;">Select Approaches to add to the minima list:</p>
+        <p id="appr-container-label" style="display: none; ">Select Approaches to add to the minima list:</p>
 
         <div id="appr-checkbox-container"></div>
 
@@ -118,6 +118,7 @@
 
                     // Create a new checkbox container
                     const checkboxContainer = document.createElement('div');
+                    checkboxContainer.style.margin = "10px 10px"
 
                     // Create a checkbox input
                     const checkbox = document.createElement('input');
@@ -129,9 +130,17 @@
                     const label = document.createElement('label');
                     label.textContent = `${data.airports[key].id.toUpperCase()} ${data.airports[key].rwy} ${data.airports[key].type}`; // Dynamic label
                     label.setAttribute('for', checkbox.id);
+                    label.setAttribute('class', 'container');
+
+                    // Create a checkmark span
+                    const checkmark = document.createElement('span');
+                    checkmark.setAttribute('class', 'checkmark');
+
 
                     // Append the checkbox and label to the container
-                    checkboxContainer.appendChild(checkbox);
+                    // checkboxContainer.appendChild(checkbox);
+                    label.appendChild(checkbox);
+                    label.appendChild(checkmark)
                     checkboxContainer.appendChild(label);
 
                     // Append the checkbox container to the main checkbox container
@@ -153,10 +162,10 @@
 
           const checkedCheckboxes = Array.from(document.querySelectorAll('#appr-checkbox-container input[type="checkbox"]:checked'));
           console.log("innerhtml : ",checkedCheckboxes[0].labels[0].innerHTML)
-          for (let i = 0; i < checkedCheckboxes.length; i++) {
-            const element = array[index];
+          // for (let i = 0; i < checkedCheckboxes.length; i++) {
+          //   const element = array[index];
             
-          }
+          // }
 
           fetch('/addapproaches', {
             method: 'POST',
