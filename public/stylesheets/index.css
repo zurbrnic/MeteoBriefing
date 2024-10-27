@@ -94,8 +94,9 @@ input[type=file] {
 }
 
 .airport-container {
-    width: 170px;
-    /* flex: 1 1 200px; Allows the item to grow and shrink, and sets a base width */
+    /* width: 170px; */
+    min-width: 170px;
+    flex: 1 1 200px; /* Allows the item to grow and shrink, and sets a base width*/
     margin: 10px;
 }
 
@@ -213,5 +214,12 @@ input[type=file] {
 @media screen and (max-width: 250px) {
     label {
         padding: 5px 35px;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    #appr-checkbox-container {
+        flex-direction: column; /* Stack checkboxes vertically */
+        align-items: flex-start; /* Align to start */
     }
 }
