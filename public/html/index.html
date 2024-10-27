@@ -88,7 +88,7 @@
         airportForm.onsubmit = function (event) {
           event.preventDefault(); // Prevent the default form submission
 
-          const airportNames = AirportsList.value; // Get the value from the input
+          const airportNames = AirportsList.value.toLowerCase(); // Get the value from the input
           console.log("Selected airports:", airportNames);
 
           fetch('/addairports', {
@@ -105,9 +105,7 @@
               return resp.json(); // Parse the JSON response
             })
             .then((data) => {
-              console.log("Response data:", data);
-              // Optionally redirect or update the UI based on the response
-              // window.location.href = '/'; // Redirect to the main page
+              // console.log("Response data:", data);
 
               AirportsList.value = "";
               addAirportsBtn.style.display = 'none';
@@ -118,7 +116,6 @@
 
               // Iterate over each property in the object
               for (let airport of airportNames.replace(/,/g, "").split(" ")) {
-                console.log("Airport: ", airport)
                 // Create Airport div container
                 const airportContainer = document.createElement('div');
                 airportContainer.className = 'airport-container';
@@ -126,7 +123,7 @@
 
                 for (const key in data.airports) {
                   if (data.airports[key].id == airport) {
-                    console.log(data.airports[key].id.toUpperCase(), data.airports[key].rwy, data.airports[key].type)
+                    // console.log(data.airports[key].id.toUpperCase(), data.airports[key].rwy, data.airports[key].type)
 
                     // Create a new checkbox container
                     const checkboxContainer = document.createElement('div');
