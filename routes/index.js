@@ -495,7 +495,8 @@ router.post('/pdf', async function (req, res, next) {
           let expDate = new Date(notamExpDateC);
           let currentDate = new Date();
           const fiftyDaysAgo = new Date();
-          fiftyDaysAgo.setDate(currentDate.getDate() - 50);
+          // Filter out all permament notams older than 60 days (AIRAC double 56 days/single 28 days)
+          fiftyDaysAgo.setDate(currentDate.getDate() - 50); 
 
           // Check expiration date
           if (!(notamExpDateC == "PERM")) {

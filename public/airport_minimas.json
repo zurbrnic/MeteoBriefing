@@ -8,8 +8,8 @@
             {"id": "lszb", "rwy": "14", "type": "ILS", "minima": "500", "vis": "1500"},
             {"id": "lszb", "rwy": "14", "type": "LOC", "minima": "800", "vis": "1500"},
             {"id": "lszb", "rwy": "14", "type": "LPV", "minima": "500", "vis": "1500"},
-            {"id": "lszb", "rwy": "32", "type": "Circling City", "minima": "2400", "vis": "5000"},
-            {"id": "lszb", "rwy": "32", "type": "Circling Romeo", "minima": "1600", "vis": "5000"},
+            {"id": "lszb", "rwy": "32", "type": "CirclingCity", "minima": "2400", "vis": "5000"},
+            {"id": "lszb", "rwy": "32", "type": "CirclingRomeo", "minima": "1600", "vis": "5000"},
          
         
             {"id": "lsgc", "rwy": "05", "type": "LPV", "minima": "600", "vis": "1500"},
