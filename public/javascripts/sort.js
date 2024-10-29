@@ -53,13 +53,19 @@ convertButton.onclick = function () {
 
 
 
-downloadButton.onclick = function () {
+downloadButton.onclick = function (event) {
+    event.preventDefault(); // Prevent any default behavior
+
     let pdfLink = downloadButton.getAttribute('href');
     
     if (!pdfLink) {
         console.error('No PDF link found');
         return; // Exit if no link is found
     }
+
+    // Update UI component visibility
+    downloadButton.style.display = 'none';
+    convertButton.style.display = 'none';
     
     // Start the download
     fetch(pdfLink)
@@ -99,7 +105,12 @@ downloadButton.onclick = function () {
         })
         .then(data => {
             console.log('File deleted:', data); // Handle deletion success
-
+            fetch('/', {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
         })
         .catch(error => {
             console.error('Error:', error); // Handle any errors

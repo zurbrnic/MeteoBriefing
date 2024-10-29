@@ -371,9 +371,12 @@ router.get('/', function (req, res, next) {
   //if there are no image filenames in a session, return the normal HTML page
   if (req.session.imagefiles === undefined) {
     res.sendFile(path.join(__dirname, '..', '/public/html/index.html'))
+    // console.log('/ -- Homepage without imagefiles');
+    // console.log(path.join(__dirname, '..', '/public/html/index.html'));
   } else {
     //if there are image filenames stored in a session, render them in an index.jade file
     res.render('index', { images: req.session.imagefiles })
+    // console.log('/ -- Homepage with imagefiles');
   }
 });
 
@@ -415,12 +418,12 @@ router.post('/pdf', async function (req, res, next) {
 
     // Create Metar/Taf pdf page
     doc.addPage();
-    doc.fontSize(14).text("METAR", { underline: true, align: 'center', paragraphGap: 8 });
-    doc.fontSize(10).text(metars);
-    doc.fontSize(14).text("\n\nTAF", { underline: true, align: 'center', paragraphGap: 8 });
-    doc.fontSize(10).text(tafs);
+    doc.fontSize(14).font('Helvetica-Bold').text("METAR", { underline: true, align: 'center', paragraphGap: 8 });
+    doc.fontSize(10).font('Helvetica').text(metars);
+    doc.fontSize(14).font('Helvetica-Bold').text("\n\nTAF", { underline: true, align: 'center', paragraphGap: 8 });
+    doc.fontSize(10).font('Helvetica').text(tafs);
 
-    doc.addPage().fontSize(14).text("Approaches Minima", { underline: true, align: 'center', paragraphGap: 8 });
+    doc.addPage().fontSize(14).font('Helvetica-Bold').text("Approaches Minima", { underline: true, align: 'center', paragraphGap: 8 });
     // Create table for minimas
     const tableData = [['Time', 'Airport', 'Runway', 'Approach', 'Minimum', 'Visibility']];
     for (let airport of req.session.filteredAirportMinimas) {
@@ -454,7 +457,7 @@ router.post('/pdf', async function (req, res, next) {
     });
 
     // Add NOTAMS to PDF
-    doc.addPage().fontSize(14).text("NOTAMS", { underline: true, align: 'center', paragraphGap: 8 });
+    doc.addPage().fontSize(14).font('Helvetica-Bold').text("NOTAMS", { underline: true, align: 'center', paragraphGap: 8 });
 
     for (const airport of req.session.airportnames.split(/[,; ]+/)) {
       let notamString = `notams_${airport}`;
@@ -496,38 +499,56 @@ router.post('/pdf', async function (req, res, next) {
           let currentDate = new Date();
           const fiftyDaysAgo = new Date();
           // Filter out all permament notams older than 60 days (AIRAC double 56 days/single 28 days)
-          fiftyDaysAgo.setDate(currentDate.getDate() - 50); 
+          fiftyDaysAgo.setDate(currentDate.getDate() - 60); 
+
+          // Convert the difference between the EffDate of the Notam and the current date
+          let dateDiff = effDate-currentDate;
+          const daysDiff = Math.floor(dateDiff / (1000 * 60 * 60 * 24)); // Full days
+          const hoursDiff = Math.floor((dateDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); // Remaining hours
 
           // Check expiration date
           if (!(notamExpDateC == "PERM")) {
             // Check if expiration date is in the past and only add notam if thats not the case
             if (expDate < currentDate) {
-              console.log('The expiration date is in the past.');
-            } else {
-              doc.font('Helvetica').text(notamID);
-              doc.font('Helvetica').text("A)  " + notamLocationA);
-              doc.font('Helvetica').text("B)  " + notamEffDateB);
-              doc.font('Helvetica').text("C)  " + notamExpDateC);
-              doc.font('Helvetica').text("E)  " + notamTextE);
-              doc.font('Helvetica').text("F)  FL" + notamLowLimF);
-              doc.font('Helvetica').text("G)  FL" + notamUppLimG);
-              doc.text(" ");
+              console.log('/pdf -- NOTAMS: The expiration date is in the past.');
+            } else if (effDate > currentDate) {
+              doc.font('Helvetica-Bold').fillColor('red').text(`${notamID}: Active in ${daysDiff} days ${hoursDiff} hours`, {paragraphGap: 2, underline: true});
+              // doc.font('Helvetica').fillColor('red').text(notamID);
+              doc.font('Helvetica').fillColor('red').text("A)  " + notamLocationA);
+              doc.font('Helvetica').fillColor('red').text("B)  " + notamEffDateB);
+              doc.font('Helvetica').fillColor('red').text("C)  " + notamExpDateC);
+              doc.font('Helvetica-Bold').fillColor('red').text("E)  " + notamTextE);
+              doc.font('Helvetica').fillColor('red').text("F)  FL" + notamLowLimF);
+              doc.font('Helvetica').fillColor('red').text("G)  FL" + notamUppLimG);
+              doc.fillColor('black').text(" ");
+            }
+            else {
+              doc.font('Helvetica-Bold').fillColor('green').text(`${notamID}: Active`, {paragraphGap: 2, underline: true});
+              // doc.font('Helvetica').fillColor('green').text(notamID);
+              doc.font('Helvetica').fillColor('green').text("A)  " + notamLocationA);
+              doc.font('Helvetica').fillColor('green').text("B)  " + notamEffDateB);
+              doc.font('Helvetica').fillColor('green').text("C)  " + notamExpDateC);
+              doc.font('Helvetica-Bold').fillColor('green').text("E)  " + notamTextE);
+              doc.font('Helvetica').fillColor('green').text("F)  FL" + notamLowLimF);
+              doc.font('Helvetica').fillColor('green').text("G)  FL" + notamUppLimG);
+              doc.fillColor('black').text(" ");
             }
           }
           else if (effDate >= fiftyDaysAgo) {
-            doc.font('Helvetica').text(notamID);
+            doc.font('Helvetica-Bold').fillColor('green').text(`${notamID}: Permanently active`, {paragraphGap: 2, underline: true});
+            // doc.font('Helvetica').text(notamID);
             doc.font('Helvetica').text("A)  " + notamLocationA);
             doc.font('Helvetica').text("B)  " + notamEffDateB);
             doc.font('Helvetica').text("C)  " + notamExpDateC);
-            doc.font('Helvetica').text("E)  " + notamTextE);
+            doc.font('Helvetica-Bold').text("E)  " + notamTextE);
             doc.font('Helvetica').text("F)  FL" + notamLowLimF);
             doc.font('Helvetica').text("G)  FL" + notamUppLimG);
-            doc.text(" ");
-            console.log("The permanently created NOTAM is not older than 50 days")
+            doc.fillColor('black').text(" ");
+            console.log("/pdf -- NOTAMS: The permanently created NOTAM is not older than 60 days")
 
           }
           else {
-            console.log("The permanently created NOTAM is older than 50 days")
+            console.log("/pdf -- NOTAMS: The permanently created NOTAM is older than 60 days")
           }
         }
       }

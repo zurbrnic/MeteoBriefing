@@ -76,6 +76,7 @@
           submitButton.style.display = 'inline-block';
         }
 
+        // Assign html elements to variables
         let addAirportsBtn = document.getElementById('add-airport-btn');
         let AirportsList = document.getElementById('airport-list');
         let airportForm = document.getElementById('airport-form');
@@ -87,7 +88,8 @@
         let AppContainerLabel = document.getElementById('appr-container-label');
         let ApprAddedLabel = document.getElementById('appr-added-label');
 
-
+        // Get default value of airportList
+        let DefaultAirportsList = AirportsList.value.toLowerCase();
 
 
         // Add airports form handling
@@ -95,6 +97,13 @@
           event.preventDefault(); // Prevent the default form submission
 
           const airportNames = AirportsList.value.toLowerCase(); // Get the value from the input
+          
+          // Check if airportsList input is not the default value
+          if (airportNames == DefaultAirportsList) {
+            console.log("Select airport!")
+            return
+          }
+
           console.log("Selected airports:", airportNames);
 
           AddLoader.style.display = 'inline-block';
@@ -177,6 +186,9 @@
         }
 
 
+
+
+        // Add Approaches
         AddApprBtn.addEventListener('click', function () {
 
           // Get all texts from the checkboxes which are checked
@@ -192,6 +204,7 @@
             AppContainerLabel.style.display = 'none'
             ApprAddedLabel.textContent = 'Approaches successfully selected'
             ApprAddedLabel.style.display = 'block';
+            AddApprBtn.style.display = 'none';
 
             // Create new JSON object and add the selected appr id, rwy, types
             const filteredMinimas = {
