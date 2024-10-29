@@ -24,7 +24,12 @@
           <p><label class="section-label" for="airport-list" id="airports-label">Airports:</label></p>
           <p><input type="text" id="airport-list" name="airportnames" onfocus="this.value=''" value="e.g. LSZG, LSZB" />
           </p>
-          <p><input type='submit' id="add-airport-btn" value='Add' /></p>
+          <!-- <p><input type='submit' id="add-airport-btn" value='Add' /></p> -->
+          <p> <a class="add-loader">
+              <input type='submit' id="add-airport-btn" value='Add' />
+              <span class="loader" id="add-loader"></span>
+            </a>
+          </p>
         </form>
 
         <p id="appr-container-label" style="display: none; ">Select Approaches to add to the minima list:</p>
@@ -76,6 +81,7 @@
         let airportForm = document.getElementById('airport-form');
 
         let AddApprBtn = document.getElementById('add-appr-btn');
+        let AddLoader = document.getElementById('add-loader');
         let ApprContainerLabel = document.getElementById("appr-container-label");
         let ApprCheckboxContainer = document.getElementById('appr-checkbox-container');
         let AppContainerLabel = document.getElementById('appr-container-label');
@@ -90,6 +96,9 @@
 
           const airportNames = AirportsList.value.toLowerCase(); // Get the value from the input
           console.log("Selected airports:", airportNames);
+
+          AddLoader.style.display = 'inline-block';
+          addAirportsBtn.style.display = 'none';
 
           fetch('/addairports', {
             method: 'POST',
@@ -108,7 +117,8 @@
               // console.log("Response data:", data);
 
               AirportsList.value = "";
-              addAirportsBtn.style.display = 'none';
+              // addAirportsBtn.style.display = 'none';
+              AddLoader.style.display = 'none';
               AddApprBtn.style.display = 'inline-block';
               ApprContainerLabel.style.display = 'block';
               ApprCheckboxContainer.style.display = 'flex';
@@ -171,7 +181,7 @@
 
           // Get all texts from the checkboxes which are checked
           const checkedCheckboxes = Array.from(document.querySelectorAll('#appr-checkbox-container input[type="checkbox"]:checked'));
-          
+
           if (!checkedCheckboxes.length) {
             ApprAddedLabel.textContent = 'Please select minimum 1 approach!'
             ApprAddedLabel.style.display = 'block';

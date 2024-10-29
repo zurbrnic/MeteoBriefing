@@ -84,6 +84,27 @@ input[type=file] {
     background-color: #766254;
 }
 
+/* .add-loader {
+    font-size: 16pt;
+    text-decoration: none;
+    color: white;
+    display: inline-block;
+    padding: 5px 20px;
+    margin-bottom: 15px;
+    background-color: #a28f81;
+    cursor: pointer;
+} */
+
+.loader {
+    display: none;
+    border: 5px solid black;
+    border-top: 5px solid white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin 1s linear infinite;
+}
+
 
 /* Style the Minima Checkboxes*/
 
@@ -192,6 +213,17 @@ input[type=file] {
 
 #appr-added-label {
     font-size: 10pt;
+}
+
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 
