@@ -267,8 +267,14 @@
             {"id": "ebos", "rwy": "08", "type": "ILS", "minima": "200", "vis": "550"},
             {"id": "ebos", "rwy": "08", "type": "LOC", "minima": "500", "vis": "1500"},
             {"id": "ebos", "rwy": "08", "type": "LPV", "minima": "200", "vis": "550"},
-            {"id": "ebos", "rwy": "08", "type": "LNAV", "minima": "500", "vis": "1500"}
+            {"id": "ebos", "rwy": "08", "type": "LNAV", "minima": "500", "vis": "1500"},
 
+            {"id": "ebci", "rwy": "24", "type": "ILS", "minima": "200", "vis": "550"},
+            {"id": "ebci", "rwy": "24", "type": "LOC", "minima": "500", "vis": "1200"},
+            {"id": "ebci", "rwy": "24", "type": "LPV", "minima": "300", "vis": "750"},
+            {"id": "ebci", "rwy": "24", "type": "LNAV", "minima": "500", "vis": "1300"},
+            {"id": "ebci", "rwy": "06", "type": "LPV", "minima": "300", "vis": "900"},
+            {"id": "ebci", "rwy": "06", "type": "LNAV", "minima": "500", "vis": "1500"}
 
         ]
     }
