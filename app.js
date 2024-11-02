@@ -67,4 +67,8 @@ set DEBUG=MeteoBriefing:* & npm run devstart
 Client ID: 04b1a2e24d574321bbc0263f4b53ac44
 Client Secret: 5cd7d9d58c6A4D13A459e2C51904073c
 
+
+// To Dos:
+- Rename PDF to something like : MeteoBriefing_Date_Airports.pdf
+
 */
