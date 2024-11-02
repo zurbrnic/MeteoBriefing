@@ -32,7 +32,7 @@ app.use(session({
   cookie: { secure: false }
 }));
 
-// connect the routing logic from indexRouter to the root path. 
+// connect the routing logic from indexRouter to the r-m "oot path. 
 // This router will handle all requests that start with the root path of the application.
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
